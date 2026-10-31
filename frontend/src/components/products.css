@@ -1,0 +1,34 @@
+.cat-section { padding: 40px 20px; background: #f4f9ff; text-align: center; }
+.cat-section h2 { color: #0b4f9c; margin-bottom: 28px; }
+
+.cat-list { display: flex; flex-direction: column; gap: 28px; max-width: 1150px; margin: 0 auto; }
+.cat-row { display: flex; align-items: center; gap: 32px; background: #fff; border-radius: 14px; padding: 24px; text-align: left; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
+.cat-row.reverse { flex-direction: row-reverse; }
+.cat-img { flex: 0 0 46%; background: #fff; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+.cat-img img { width: 100%; height: 340px; object-fit: contain; }
+.cat-info { flex: 1; display: flex; flex-direction: column; }
+.cat-info h3 { color: #0b4f9c; font-size: 26px; margin: 0 0 4px; }
+.cat-tagline { color: #0b6fd6; font-weight: 600; margin: 0 0 10px; }
+.cat-desc { color: #444; font-size: 15px; line-height: 1.6; margin-bottom: 12px; }
+.cat-points { padding-left: 20px; margin: 0 0 14px; color: #333; font-size: 14.5px; line-height: 1.7; }
+.cat-price { color: #0b4f9c; margin: 0 0 14px; }
+.cat-btn { align-self: flex-start; background: #0b6fd6; color: #fff; padding: 11px 22px; border-radius: 8px; text-decoration: none; font-weight: 600; }
+.cat-btn:hover { background: #0b4f9c; }
+
+.back-btn { display: inline-block; margin-bottom: 16px; color: #0b6fd6; font-weight: 600; text-decoration: none; }
+.cat-hero { display: flex; align-items: center; gap: 32px; max-width: 1000px; margin: 0 auto 28px; text-align: left; background: #fff; border-radius: 14px; padding: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
+.cat-hero img { flex: 0 0 42%; width: 42%; height: 300px; object-fit: contain; }
+.cat-hero h2 { margin: 0 0 6px; }
+.cat-sub { font-size: 20px; color: #0b4f9c; margin: 24px 0 10px; }
+.chip-row { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 8px; }
+.chip { background: #e3f0ff; color: #0b4f9c; padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 14px; }
+.table-wrap { max-width: 900px; margin: 0 auto; overflow-x: auto; }
+.series-table { width: 100%; border-collapse: collapse; background: #fff; text-align: left; }
+.series-table th { background: #0b6fd6; color: #fff; padding: 12px; }
+.series-table td { padding: 12px; border-bottom: 1px solid #e3ecf7; }
+
+@media (max-width: 800px) {
+  .cat-row, .cat-row.reverse, .cat-hero { flex-direction: column; }
+  .cat-img, .cat-hero img { flex: none; width: 100%; }
+  .cat-img img { height: 240px; }
+}
