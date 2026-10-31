@@ -1,21 +1,81 @@
-<<<<<<< HEAD
-# React + Vite
+# Aquatic Enterprises
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Aquatic Enterprises is a full-stack web application built using React, FastAPI, and PostgreSQL.
 
-Currently, two official plugins are available:
+## Technologies Used
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Frontend:** React, Vite, JavaScript, CSS
+- **Backend:** Python, FastAPI
+- **Database:** PostgreSQL
 
-## React Compiler
+## Project Structure
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```text
+aquatic-enterprises/
+├── backend/
+│   ├── main.py
+│   ├── auth.py
+│   ├── database.py
+│   └── requirements.txt
+├── frontend/
+│   ├── public/
+│   ├── src/
+│   ├── package.json
+│   └── package-lock.json
+├── .gitignore
+└── README.md
+```
 
-## Expanding the Oxlint configuration
+## Setup Instructions
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
-=======
-# aquatic-enterprises
-Aquatic Enterprises — a full-stack website built with React, FastAPI, and PostgreSQL.
->>>>>>> 3c1f2e2b5cc9ec13528bbe1c7f07c482dc715b01
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/kadambariborse2007-cell/aquatic-enterprises.git
+cd aquatic-enterprises
+```
+
+### 2. Set Up the Backend
+
+Create and activate a Python virtual environment, then install the backend dependencies.
+
+```bash
+cd backend
+python -m venv .venv
+```
+
+On Windows PowerShell, activate it with:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
+
+Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+Configure the required environment variables in a local `.env` file before starting the backend.
+
+### 3. Set Up the Frontend
+
+Open another terminal and run:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Use the local URL displayed by Vite to open the website.
+
+## Security
+
+- Do not commit `.env` files.
+- Never publish database passwords, JWT secrets, or API keys.
+- Use environment variables for sensitive configuration.
+
+## License
+
+No license has been specified yet.
