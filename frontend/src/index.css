@@ -6,3 +6,85 @@ button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; f
 a { color: inherit; }
 button { cursor: pointer; }
 #root { width: 100%; min-height: 100vh; }
+
+/* Logo centered inside the login/account card */
+.account-logo {
+  display: block;
+  margin: 0 auto 16px;
+}
+
+/* Colorful + bold enquiry buttons */
+.enquiry-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.enquiry-btn-wa,
+.enquiry-btn-mail {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 26px;
+  border: none;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.enquiry-btn-wa   { background: #25d366; }
+.enquiry-btn-mail { background: #00bcc9; }
+
+.enquiry-btn-wa:hover,
+.enquiry-btn-mail:hover {
+  transform: translateY(-1px);
+  filter: brightness(0.95);
+}
+/* Logo centered inside the login / account card */
+img.account-logo {
+  display: block;
+  margin: 0 auto 16px;
+}
+
+/* Colorful + bold enquiry buttons */
+.enquiry-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+button.enquiry-send-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 26px;
+  border: none;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+button.enquiry-send-button.whatsapp { background: #25d366; }
+button.enquiry-send-button.email    { background: #00bcc9; }
+
+button.enquiry-send-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(0.95);
+}
+
+button.enquiry-send-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 480px) {
+  .enquiry-actions { flex-direction: column; }
+  button.enquiry-send-button { width: 100%; }
+}
