@@ -11,6 +11,7 @@ import Register from "./pages/Register.jsx";
 import Account from "./pages/Account.jsx";
 import "./App.css";
 import CategoryPage from "./pages/CategoryPage";
+import Reviews from "./pages/Reviews.jsx";
 
 export default function App() {
   return (
@@ -25,11 +26,12 @@ export default function App() {
           <Route path="/products/services" element={<Products initialTab="service" />} />
           <Route path="/products/spare-parts" element={<Products initialTab="parts" />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/reviews" element={<Reviews />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/account" element={<ProtectedRoute><Account /></ProtectedRoute>} />
-          <Route path="*" element={<Navigate to="/" replace />} />
           <Route path="/category/:slug" element={<CategoryPage />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
       <Footer />

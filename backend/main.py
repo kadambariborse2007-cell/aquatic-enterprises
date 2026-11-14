@@ -20,6 +20,9 @@ from auth import (
 
 app = FastAPI(title="Aquatic Enterprises API")
 
+from reviews import router as reviews_router
+app.include_router(reviews_router)
+
 
 # --------------------------------------------------
 # CORS CONFIGURATION
