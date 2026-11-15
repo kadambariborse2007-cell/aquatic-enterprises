@@ -1,6 +1,6 @@
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
-body { margin: 0; min-width: 320px; font-family: Arial, Helvetica, sans-serif; background: #fff; color: #17344d; }
+body { margin: 0; min-width: 320px; font-family: "Inter", Arial, Helvetica, sans-serif; background: #fff; color: #17344d; }
 img { max-width: 100%; }
 button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; font: inherit; }
 a { color: inherit; }
@@ -165,4 +165,170 @@ button.review-submit:disabled { opacity: 0.6; cursor: not-allowed; }
 
 @media (max-width: 700px) {
   .review-summary { grid-template-columns: 1fr; }
+}
+/* ===== Shop map + open/closed status ===== */
+.shop-map-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.shop-map-header h2 { margin: 0; color: #17344d; }
+
+.shop-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.shop-status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.shop-status.open   { background: #e6f9ee; color: #12803f; }
+.shop-status.closed { background: #fdeaea; color: #c62828; }
+
+.shop-map-layout {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+}
+
+.shop-map-frame {
+  min-height: 380px;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid #dbe7ee;
+}
+
+.shop-map-frame iframe {
+  width: 100%;
+  height: 100%;
+  min-height: 380px;
+  border: 0;
+}
+
+.shop-map-info {
+  padding: 24px;
+  border-radius: 18px;
+  background: #fff;
+  border: 1px solid #dbe7ee;
+}
+
+.shop-map-info h3 { margin: 0 0 12px; color: #17344d; }
+
+.shop-hours { list-style: none; margin: 0 0 16px; padding: 0; }
+
+.shop-hours li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.shop-hours li.today {
+  background: #eaf7f9;
+  font-weight: 700;
+  color: #0a7f8a;
+}
+
+.shop-address { font-size: 14px; line-height: 1.6; color: #5b7183; }
+
+a.shop-directions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 8px;
+  padding: 12px 22px;
+  border-radius: 999px;
+  background: #00bcc9;
+  color: #fff;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+a.shop-directions:hover { filter: brightness(0.95); }
+
+@media (max-width: 800px) {
+  .shop-map-layout { grid-template-columns: 1fr; }
+}
+
+/* ===== Shop page: gallery, reviews, lightbox ===== */
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+button.gallery-item {
+  padding: 0;
+  border: 1px solid #dbe7ee;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #f3f8fb;
+  aspect-ratio: 4 / 3;
+}
+
+button.gallery-item img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.25s ease;
+}
+
+button.gallery-item:hover img { transform: scale(1.05); }
+
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 20, 35, 0.85);
+}
+
+.lightbox img {
+  max-width: 100%;
+  max-height: 90vh;
+  border-radius: 12px;
+}
+
+button.lightbox-close {
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+  background: #fff;
+  color: #17344d;
+  font-size: 28px;
+  line-height: 1;
+}
+/* Headings, navigation and buttons use Poppins */
+h1, h2, h3, h4,
+.eyebrow,
+.about-tag,
+.navlinks a,
+.button,
+.category-tab,
+.topbar-tagline {
+  font-family: "Poppins", "Inter", Arial, Helvetica, sans-serif;
 }
