@@ -25,6 +25,7 @@ from admin import router as admin_router
 from products import router as products_router
 from uploads import router as uploads_router, UPLOAD_DIR
 from business import router as business_router
+from banner import router as banner_router
 from fastapi.staticfiles import StaticFiles
 
 app.include_router(reviews_router)
@@ -32,6 +33,7 @@ app.include_router(admin_router)
 app.include_router(products_router)
 app.include_router(uploads_router)
 app.include_router(business_router)
+app.include_router(banner_router)
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
 # --------------------------------------------------

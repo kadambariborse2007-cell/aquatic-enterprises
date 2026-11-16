@@ -1,6 +1,69 @@
+import { useEffect, useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { useAuth } from "../AuthContext";
 import useBusiness from "../useBusiness";
+import { fetchBanner } from "../api";
+
+const bannerStyle = {
+  background: "#00bac4",
+  color: "#082b49",
+  textAlign: "center",
+  padding: "10px 5%",
+  fontWeight: "bold",
+  fontSize: "15px",
+};
+
+const bannerLinkStyle = {
+  color: "#082b49",
+  textDecoration: "underline",
+};
+
+function OfferBanner() {
+  const [banner, setBanner] = useState(null);
+
+  useEffect(() => {
+    let active = true;
+
+    fetchBanner()
+      .then((data) => {
+        if (active) setBanner(data);
+      })
+      .catch(() => {});
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  if (!banner || !banner.active || !banner.message) {
+    return null;
+  }
+
+  const isInternal = banner.link.startsWith("/");
+
+  return (
+    <div style={bannerStyle}>
+      {banner.link ? (
+        isInternal ? (
+          <Link to={banner.link} style={bannerLinkStyle}>
+            {banner.message}
+          </Link>
+        ) : (
+          <a
+            href={banner.link}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={bannerLinkStyle}
+          >
+            {banner.message}
+          </a>
+        )
+      ) : (
+        banner.message
+      )}
+    </div>
+  );
+}
 
 export default function Header() {
   const { user } = useAuth();
@@ -9,6 +72,7 @@ export default function Header() {
 
   return (
     <>
+      <OfferBanner />
       <div className="topbar">
         <div className="topbar-inner">
           <span className="topbar-location">📍 {business.address}</span>

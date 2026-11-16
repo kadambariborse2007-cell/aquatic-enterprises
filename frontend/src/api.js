@@ -212,3 +212,28 @@ export async function updateBusiness(data) {
 
   return response.json();
 }
+
+export async function fetchBanner() {
+  const response = await fetch(`${API_BASE_URL}/banner`);
+
+  if (!response.ok) {
+    throw new Error("Could not load banner");
+  }
+
+  return response.json();
+}
+
+export async function updateBanner(data) {
+  const response = await fetch(`${API_BASE_URL}/admin/banner`, {
+    method: "PUT",
+    headers: getAdminHeaders(),
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.detail || "Could not save banner");
+  }
+
+  return response.json();
+}
