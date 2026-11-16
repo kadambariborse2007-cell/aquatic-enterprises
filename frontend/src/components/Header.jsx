@@ -3,6 +3,7 @@ import { Link, NavLink } from "react-router-dom";
 import { useAuth } from "../AuthContext";
 import useBusiness from "../useBusiness";
 import { fetchBanner } from "../api";
+import SplashScreen from "./SplashScreen";
 
 const bannerStyle = {
   background: "#00bac4",
@@ -96,6 +97,8 @@ export default function Header() {
           <NavLink to="/shop">Visit Us</NavLink>
         </nav>
       </header>
+      <SplashScreen />
+      <welcomePopup/>
     </>
   );
 }
