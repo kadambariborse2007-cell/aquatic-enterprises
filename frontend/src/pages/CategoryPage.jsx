@@ -42,10 +42,10 @@ export default function CategoryPage() {
     );
   }
 
+  const enquiryLink = `/contact?type=pump&product=${encodeURIComponent(cat.name)}`;
+
   return (
     <section className="cat-section">
-      <Link className="back-btn" to="/products">← Back</Link>
-
       <div className="cat-hero">
         <img src={imageUrl(cat.image)} alt={cat.name} />
         <div>
@@ -53,6 +53,12 @@ export default function CategoryPage() {
           <p className="cat-tagline">{cat.tagline}</p>
           <p className="cat-desc">{cat.description}</p>
           <p className="cat-price">Approx. price: <b>{cat.price}</b></p>
+
+          <div style={{ marginTop: "28px" }}>
+            <Link className="cat-btn" to={enquiryLink}>
+              Enquire About This Product →
+            </Link>
+          </div>
         </div>
       </div>
 
@@ -79,6 +85,12 @@ export default function CategoryPage() {
             ))}
           </tbody>
         </table>
+      </div>
+
+      <div style={{ textAlign: "center", marginTop: "30px" }}>
+        <Link className="cat-btn" to={enquiryLink}>
+          Enquire About This Product →
+        </Link>
       </div>
     </section>
   );

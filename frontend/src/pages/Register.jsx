@@ -31,7 +31,6 @@ export default function Register() {
   return (
     <div className="auth-page">
       <div className="auth-card">
-        <img className="auth-logo" src="/images/aquatic-logo.png" alt="Aquatic Enterprises" />
         <h2>Create Account</h2>
         <p className="auth-sub">Aquatic Enterprises</p>
         <form onSubmit={submit}>

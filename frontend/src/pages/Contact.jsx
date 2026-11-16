@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import SectionHeading from "../components/SectionHeading.jsx";
 import useBusiness from "../useBusiness";
+import { useAuth } from "../AuthContext";
 
 const API_URL = "http://127.0.0.1:8001/enquiries";
 
@@ -12,11 +13,33 @@ const enquiryTypes = [
   { value: "general", label: "General Enquiry" },
 ];
 
+const lockCard = {
+  background: "white",
+  padding: "40px 30px",
+  borderRadius: "16px",
+  boxShadow: "0 8px 30px rgba(8, 43, 73, 0.1)",
+  textAlign: "center",
+};
+
+const lockButton = {
+  display: "inline-block",
+  padding: "12px 28px",
+  borderRadius: "999px",
+  fontWeight: "bold",
+  textDecoration: "none",
+  margin: "6px",
+};
+
 export default function Contact() {
   const business = useBusiness();
   const phoneLink = business.phone.replace(/\s+/g, "");
 
+  const { user, token, loading } = useAuth();
+  const location = useLocation();
+  const nextPath = encodeURIComponent(location.pathname + location.search);
+
   const [searchParams] = useSearchParams();
+  const product = searchParams.get("product") || "";
   const [type, setType] = useState(searchParams.get("type") || "general");
   const [status, setStatus] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -102,7 +125,10 @@ Thank you.
     try {
       const response = await fetch(API_URL, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify(databaseData),
         keepalive: true,
       });
@@ -131,6 +157,205 @@ Thank you.
     }
   }
 
+  function renderEnquiryArea() {
+    if (loading) {
+      return <p style={{ padding: 20 }}>Loading...</p>;
+    }
+
+    if (!user) {
+      return (
+        <div style={lockCard}>
+          <div style={{ fontSize: "42px" }}>🔒</div>
+          <h3 style={{ color: "#082b49" }}>Please login to send an enquiry</h3>
+          <p style={{ color: "#475569", maxWidth: "420px", margin: "10px auto 22px" }}>
+            Create a free account or login. It takes less than a minute, and
+            you will come straight back to this form.
+          </p>
+          <Link
+            to={`/login?next=${nextPath}`}
+            style={{ ...lockButton, background: "#00bac4", color: "#082b49" }}
+          >
+            Login
+          </Link>
+          <Link
+            to={`/register?next=${nextPath}`}
+            style={{
+              ...lockButton,
+              border: "2px solid #082b49",
+              color: "#082b49",
+            }}
+          >
+            Register
+          </Link>
+        </div>
+      );
+    }
+
+    return (
+      <form className="enquiry-form" onSubmit={handleSubmit}>
+        <label>
+          Enquiry type
+          <select
+            value={type}
+            onChange={(event) => setType(event.target.value)}
+          >
+            {enquiryTypes.map((item) => (
+              <option value={item.value} key={item.value}>
+                {item.label}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <div className="form-row">
+          <label>
+            Full name
+            <input
+              required
+              name="full_name"
+              placeholder="Your full name"
+              defaultValue={user.name || ""}
+            />
+          </label>
+
+          <label>
+            Email address
+            <input
+              required
+              type="email"
+              name="email"
+              placeholder="you@example.com"
+              defaultValue={user.email || ""}
+            />
+          </label>
+        </div>
+
+        <div className="form-row">
+          <label>
+            Phone number
+            <input
+              required
+              type="tel"
+              name="phone"
+              placeholder="+91"
+              defaultValue={user.phone || ""}
+            />
+          </label>
+
+          <label>
+            Company (optional)
+            <input name="company" placeholder="Company name" />
+          </label>
+        </div>
+
+        {type === "pump" && (
+          <div className="form-row">
+            <label>
+              Pump type / application
+              <input
+                name="pumpType"
+                placeholder="e.g. borewell pump"
+                defaultValue={product}
+              />
+            </label>
+
+            <label>
+              Quantity
+              <input
+                name="quantity"
+                type="number"
+                min="1"
+                placeholder="1"
+              />
+            </label>
+          </div>
+        )}
+
+        {type === "service" && (
+          <div className="form-row">
+            <label>
+              Pump brand / model
+              <input name="pumpModel" placeholder="Brand and model" />
+            </label>
+
+            <label>
+              Service location
+              <input name="serviceLocation" placeholder="Area / city" />
+            </label>
+          </div>
+        )}
+
+        {type === "parts" && (
+          <div className="form-row">
+            <label>
+              Part name / number
+              <input name="partName" placeholder="Part name or number" />
+            </label>
+
+            <label>
+              Pump brand / model
+              <input name="pumpModel" placeholder="Brand and model" />
+            </label>
+          </div>
+        )}
+
+        <label>
+          How can we help?
+          <textarea
+            required
+            name="message"
+            rows="5"
+            placeholder={
+              type === "service"
+                ? "Describe the pump issue..."
+                : type === "parts"
+                ? "Describe the spare part you need..."
+                : type === "pump"
+                ? "Tell us about your pump requirements..."
+                : "Write your message..."
+            }
+          />
+        </label>
+
+        {/* TWO ENQUIRY BUTTONS */}
+        <div className="enquiry-actions">
+          <button
+            className="enquiry-send-button whatsapp"
+            type="submit"
+            name="sendMethod"
+            value="whatsapp"
+            disabled={submitting}
+          >
+            <span>●</span>
+            Send via WhatsApp →
+          </button>
+
+          <button
+            className="enquiry-send-button email"
+            type="submit"
+            name="sendMethod"
+            value="email"
+            disabled={submitting}
+          >
+            <span>✉</span>
+            Send via Email →
+          </button>
+        </div>
+
+        {status && (
+          <p role="status" aria-live="polite" className="enquiry-status">
+            {status}
+          </p>
+        )}
+
+        <p className="form-note">
+          Please don't include passwords or sensitive personal information
+          in this form.
+        </p>
+      </form>
+    );
+  }
+
   return (
     <>
       <section className="page-banner compact-page-banner">
@@ -150,164 +375,11 @@ Thank you.
         <SectionHeading
           eyebrow="GET IN TOUCH"
           title="Send Us an Enquiry"
-          description="Fill out the form below and choose WhatsApp or Email to send your enquiry."
+          description="Login, fill out the form below and choose WhatsApp or Email to send your enquiry."
         />
 
         <div className="contact-layout">
-          <form className="enquiry-form" onSubmit={handleSubmit}>
-            <label>
-              Enquiry type
-              <select
-                value={type}
-                onChange={(event) => setType(event.target.value)}
-              >
-                {enquiryTypes.map((item) => (
-                  <option value={item.value} key={item.value}>
-                    {item.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <div className="form-row">
-              <label>
-                Full name
-                <input
-                  required
-                  name="full_name"
-                  placeholder="Your full name"
-                />
-              </label>
-
-              <label>
-                Email address
-                <input
-                  required
-                  type="email"
-                  name="email"
-                  placeholder="you@example.com"
-                />
-              </label>
-            </div>
-
-            <div className="form-row">
-              <label>
-                Phone number
-                <input
-                  required
-                  type="tel"
-                  name="phone"
-                  placeholder="+91"
-                />
-              </label>
-
-              <label>
-                Company (optional)
-                <input name="company" placeholder="Company name" />
-              </label>
-            </div>
-
-            {type === "pump" && (
-              <div className="form-row">
-                <label>
-                  Pump type / application
-                  <input name="pumpType" placeholder="e.g. borewell pump" />
-                </label>
-
-                <label>
-                  Quantity
-                  <input
-                    name="quantity"
-                    type="number"
-                    min="1"
-                    placeholder="1"
-                  />
-                </label>
-              </div>
-            )}
-
-            {type === "service" && (
-              <div className="form-row">
-                <label>
-                  Pump brand / model
-                  <input name="pumpModel" placeholder="Brand and model" />
-                </label>
-
-                <label>
-                  Service location
-                  <input name="serviceLocation" placeholder="Area / city" />
-                </label>
-              </div>
-            )}
-
-            {type === "parts" && (
-              <div className="form-row">
-                <label>
-                  Part name / number
-                  <input name="partName" placeholder="Part name or number" />
-                </label>
-
-                <label>
-                  Pump brand / model
-                  <input name="pumpModel" placeholder="Brand and model" />
-                </label>
-              </div>
-            )}
-
-            <label>
-              How can we help?
-              <textarea
-                required
-                name="message"
-                rows="5"
-                placeholder={
-                  type === "service"
-                    ? "Describe the pump issue..."
-                    : type === "parts"
-                    ? "Describe the spare part you need..."
-                    : type === "pump"
-                    ? "Tell us about your pump requirements..."
-                    : "Write your message..."
-                }
-              />
-            </label>
-
-            {/* TWO ENQUIRY BUTTONS */}
-            <div className="enquiry-actions">
-              <button
-                className="enquiry-send-button whatsapp"
-                type="submit"
-                name="sendMethod"
-                value="whatsapp"
-                disabled={submitting}
-              >
-                <span>●</span>
-                Send via WhatsApp →
-              </button>
-
-              <button
-                className="enquiry-send-button email"
-                type="submit"
-                name="sendMethod"
-                value="email"
-                disabled={submitting}
-              >
-                <span>✉</span>
-                Send via Email →
-              </button>
-            </div>
-
-            {status && (
-              <p role="status" aria-live="polite" className="enquiry-status">
-                {status}
-              </p>
-            )}
-
-            <p className="form-note">
-              Please don't include passwords or sensitive personal information
-              in this form.
-            </p>
-          </form>
+          {renderEnquiryArea()}
 
           {/* CONTACT DETAILS */}
           <aside className="contact-card">

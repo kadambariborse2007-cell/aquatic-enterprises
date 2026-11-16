@@ -1,15 +1,17 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchAdminReviews, setReviewStatus, deleteReview } from "../api";
-import ProductsManager from "../components/ProductsManager";
+import ProductsManager from "../components/productsManager";
 import BusinessManager from "../components/BusinessManager";
 import BannerManager from "../components/BannerManager";
+import CustomersManager from "../components/CustomersManager";
 
 const TABS = [
   { id: "reviews", label: "Customer Reviews", icon: "⭐" },
   { id: "products", label: "Products", icon: "📦" },
   { id: "business", label: "Business Details", icon: "🏢" },
   { id: "banner", label: "Offers Banner", icon: "📢" },
+  { id: "customers", label: "Customers", icon: "👥" },
 ];
 
 const TAB_INFO = {
@@ -17,6 +19,7 @@ const TAB_INFO = {
   products: "Edit categories, pump models and product photos.",
   business: "Update your phone, WhatsApp, email, address and working hours.",
   banner: "Show an offer or announcement at the top of your website.",
+  customers: "See customers who registered on your website.",
 };
 
 const STATUS_COLORS = {
@@ -64,7 +67,9 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     loadReviews();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter]);
+  
 
   async function handleStatus(reviewId, status) {
     try {
@@ -214,6 +219,7 @@ export default function AdminDashboard() {
           {tab === "products" && <ProductsManager />}
           {tab === "business" && <BusinessManager />}
           {tab === "banner" && <BannerManager />}
+          {tab === "customers" && <CustomersManager />}
         </main>
       </div>
     </div>

@@ -1907,3 +1907,509 @@
     transform: none;
   }
 }
+/* ===== Solid navbar on every page (logo looks proper) ===== */
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  min-height: 76px;
+  padding: 8px 4.8%;
+  background: #ffffff;
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 4px 18px rgba(8, 43, 73, 0.08);
+}
+.brand img {
+  width: auto;
+  height: 56px;
+  max-width: 230px;
+  max-height: none;
+  object-fit: contain;
+}
+.navlinks a {
+  color: var(--navy);
+}
+.navlinks a:hover,
+.navlinks a.active {
+  color: #008f99;
+}
+
+/* content no longer hides behind the navbar, so remove the extra top space */
+.hero { padding-top: 55px; }
+.page-banner { padding-top: 70px; }
+.page-banner.compact-page-banner { padding-top: 40px; }
+.auth-page { padding-top: 60px; }
+
+/* footer logo on dark background */
+.footer-brand img {
+  width: auto;
+  height: 56px;
+  padding: 6px 12px;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+@media (max-width: 768px) {
+  .page-banner.compact-page-banner { padding-top: 30px; }
+}
+@media (max-width: 760px) {
+  .navbar { background: #ffffff; }
+  .brand img { height: 50px; }
+}
+@media (max-width: 480px) {
+  .page-banner.compact-page-banner { padding-top: 26px; }
+}
+/* ================= THEME: dashboard-style look for the whole website ================= */
+:root {
+  --grad-main: linear-gradient(120deg, #082b49 0%, #0b5a85 55%, #00a9b5 100%);
+  --shadow-soft: 0 10px 30px rgba(8, 43, 73, 0.08);
+  --shadow-lift: 0 18px 40px rgba(8, 43, 73, 0.16);
+}
+
+body { background: #f5f9ff; }
+
+/* ---------- top bar ---------- */
+.topbar { background: linear-gradient(90deg, #031d34, #082b49); }
+
+/* ---------- navbar: solid, sticky, pill links ---------- */
+.navbar {
+  position: sticky;
+  top: 0;
+  left: auto;
+  z-index: 30;
+  min-height: 76px;
+  padding: 8px 4.8%;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 6px 22px rgba(8, 43, 73, 0.08);
+}
+.brand img {
+  width: auto;
+  height: 56px;
+  max-width: 230px;
+  max-height: none;
+  object-fit: contain;
+}
+.navlinks { gap: 6px; }
+.navlinks a {
+  padding: 9px 15px;
+  border-radius: 999px;
+  color: var(--navy);
+  transition: background 0.2s, color 0.2s;
+}
+.navlinks a:after { display: none; }
+.navlinks a:hover { background: #e3f7f9; color: #008f99; }
+.navlinks a.active { background: var(--navy); color: #fff; }
+
+/* ---------- home hero (navbar no longer floats over it) ---------- */
+.hero { padding-top: 55px; }
+.hero-copy { padding-top: 20px; }
+
+/* ---------- page banners: floating gradient card ---------- */
+.page-banner {
+  position: relative;
+  overflow: hidden;
+  margin: 24px 4% 0;
+  padding: 64px 6% 56px;
+  border-radius: 26px;
+  background: var(--grad-main);
+  box-shadow: var(--shadow-lift);
+}
+.page-banner::before {
+  content: "";
+  position: absolute;
+  width: 280px;
+  height: 280px;
+  right: -70px;
+  top: -110px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+}
+.page-banner::after {
+  content: "";
+  position: absolute;
+  width: 170px;
+  height: 170px;
+  left: 6%;
+  bottom: -100px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.07);
+}
+.page-banner > * { position: relative; z-index: 1; }
+.page-banner .eyebrow { color: #9ff3f7; }
+.page-banner.compact-page-banner { padding: 46px 6% 40px; }
+
+/* ---------- section backgrounds: soft glow ---------- */
+.soft-section,
+.service-preview,
+.about-section,
+.contact-page {
+  background:
+    radial-gradient(circle at 10% 15%, rgba(0, 186, 196, 0.12) 0, transparent 40%),
+    radial-gradient(circle at 90% 85%, rgba(99, 102, 241, 0.08) 0, transparent 40%),
+    #f5f9ff;
+}
+
+/* ---------- headings get a small accent bar ---------- */
+.section-heading h2::after {
+  content: "";
+  display: block;
+  width: 64px;
+  height: 4px;
+  margin: 14px auto 0;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #00bac4, #0b5a85);
+}
+
+/* ---------- cards ---------- */
+.product-card,
+.catalog-card,
+.service-card,
+.specialty-card,
+.history-card,
+.enquiry-form,
+.contact-card,
+.review-card,
+.review-summary,
+.review-form,
+.shop-map-info,
+.about-features > div {
+  border-radius: 20px;
+  border: 1px solid rgba(8, 43, 73, 0.06);
+  box-shadow: var(--shadow-soft);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.service-card:hover,
+.specialty-card:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-lift);
+}
+.product-card:hover,
+.catalog-card:hover { box-shadow: var(--shadow-lift); }
+.round-icon {
+  background: linear-gradient(135deg, #d9f7fa, #e6efff);
+}
+
+/* ---------- buttons ---------- */
+.button { box-shadow: 0 8px 20px rgba(0, 186, 196, 0.18); }
+.button-primary {
+  background: linear-gradient(135deg, #00bac4, #0b8fb0);
+  color: #fff;
+}
+.button-primary:hover {
+  background: linear-gradient(135deg, #079ca7, #0b6f93);
+}
+.button-outline { box-shadow: none; }
+.cat-section .cat-btn {
+  background: linear-gradient(135deg, #00bac4, #0b8fb0);
+  border-radius: 999px;
+  box-shadow: 0 8px 20px rgba(0, 186, 196, 0.25);
+}
+.cat-section .series-table thead th {
+  background: var(--grad-main);
+}
+
+/* ---------- call-to-action band ---------- */
+.cta-band {
+  background: var(--grad-main);
+}
+
+/* ---------- footer ---------- */
+.footer {
+  margin-top: 40px;
+  border-radius: 28px 28px 0 0;
+  background: linear-gradient(180deg, #082b49 0%, #031d34 100%);
+}
+.footer-brand img {
+  width: auto;
+  height: 56px;
+  padding: 6px 12px;
+  border-radius: 10px;
+  background: #fff;
+}
+.footer h3 { color: #fff; }
+.footer h3::after {
+  content: "";
+  display: block;
+  width: 36px;
+  height: 3px;
+  margin-top: 8px;
+  border-radius: 3px;
+  background: #00bac4;
+}
+
+/* ---------- login / register pages ---------- */
+.auth-page { padding-top: 60px; }
+.auth-card { border-radius: 22px; }
+
+/* ---------- mobile ---------- */
+@media (max-width: 760px) {
+  .navbar { position: relative; background: #fff; }
+  .brand img { height: 50px; }
+  .navlinks a { padding: 7px 12px; }
+  .page-banner { margin: 16px 4% 0; border-radius: 20px; padding: 44px 6% 38px; }
+  .page-banner.compact-page-banner { padding: 34px 6% 30px; }
+  .footer { border-radius: 22px 22px 0 0; }
+}
+/* ================= THEME V2: dark navbar + attractive look ================= */
+
+/* ---------- navbar: dark navy to teal gradient ---------- */
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  min-height: 78px;
+  padding: 10px 4.8%;
+  background: linear-gradient(100deg, #031d34 0%, #082b49 45%, #0b5a85 100%);
+  backdrop-filter: blur(12px);
+  border-bottom: 2px solid rgba(0, 186, 196, 0.55);
+  box-shadow: 0 8px 28px rgba(3, 29, 52, 0.35);
+}
+
+/* ---------- logo: white rounded badge ---------- */
+.brand img {
+  height: 50px;
+  width: auto;
+  max-width: 230px;
+  padding: 5px 12px;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.brand:hover img {
+  transform: scale(1.04);
+  box-shadow: 0 6px 20px rgba(0, 186, 196, 0.4);
+}
+
+/* ---------- menu links ---------- */
+.navlinks a {
+  color: #fff;
+  padding: 9px 16px;
+  border-radius: 999px;
+}
+.navlinks a:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+}
+.navlinks a.active {
+  background: linear-gradient(135deg, #00bac4, #0b8fb0);
+  color: #fff;
+  box-shadow: 0 6px 16px rgba(0, 186, 196, 0.4);
+}
+
+/* ---------- hero ---------- */
+.hero h1 strong {
+  background: linear-gradient(90deg, #35d5dc, #00bac4);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ---------- cards: lift + teal top line ---------- */
+.product-card,
+.catalog-card,
+.service-card,
+.specialty-card {
+  position: relative;
+  overflow: hidden;
+}
+.service-card::before,
+.specialty-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #00bac4, #0b5a85);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s ease;
+}
+.service-card:hover::before,
+.specialty-card:hover::before {
+  transform: scaleX(1);
+}
+.product-card:hover .product-image img,
+.catalog-card:hover .product-image img {
+  transform: scale(1.06);
+}
+.product-image img {
+  transition: transform 0.35s ease;
+}
+
+/* ---------- buttons: glow ---------- */
+.button-primary:hover {
+  box-shadow: 0 12px 28px rgba(0, 186, 196, 0.45);
+}
+.button-outline:hover {
+  box-shadow: 0 12px 28px rgba(0, 186, 196, 0.35);
+}
+
+/* ---------- category tabs ---------- */
+.category-tab {
+  transition: all 0.2s ease;
+}
+.category-tab:hover,
+.category-tab.active {
+  background: linear-gradient(135deg, #082b49, #0b5a85);
+  box-shadow: 0 8px 20px rgba(8, 43, 73, 0.25);
+  transform: translateY(-2px);
+}
+
+/* ---------- fade-in animation ---------- */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(22px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.section-heading,
+.product-card,
+.catalog-card,
+.service-card,
+.specialty-card,
+.history-card,
+.about-content,
+.about-image,
+.contact-layout,
+.page-banner {
+  animation: fadeUp 0.7s ease both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .section-heading, .product-card, .catalog-card, .service-card,
+  .specialty-card, .history-card, .about-content, .about-image,
+  .contact-layout, .page-banner { animation: none; }
+}
+
+/* ---------- mobile: navbar dark rahe ---------- */
+@media (max-width: 760px) {
+  .navbar {
+    position: relative;
+    background: linear-gradient(100deg, #031d34, #0b5a85);
+  }
+  .brand img { height: 46px; }
+  .navlinks a { padding: 7px 12px; }
+}
+/* ================= THEME V3: no plain white backgrounds ================= */
+
+/* whole page base: soft blue-teal tint */
+body {
+  background:
+    radial-gradient(circle at 0% 0%, rgba(0, 186, 196, 0.10) 0, transparent 35%),
+    radial-gradient(circle at 100% 100%, rgba(11, 90, 133, 0.10) 0, transparent 35%),
+    #f1f7fc;
+  background-attachment: fixed;
+}
+
+/* the sections that were plain white */
+.products-preview,
+.products-page {
+  position: relative;
+  background:
+    radial-gradient(circle at 8% 10%, rgba(0, 186, 196, 0.14) 0, transparent 38%),
+    radial-gradient(circle at 92% 90%, rgba(11, 90, 133, 0.12) 0, transparent 40%),
+    radial-gradient(rgba(8, 43, 73, 0.07) 1.2px, transparent 1.2px),
+    linear-gradient(180deg, #f7fbff 0%, #eaf4fb 100%);
+  background-size: auto, auto, 22px 22px, auto;
+}
+
+/* alternate section gets a slightly different tint, so the page has rhythm */
+.service-preview,
+.soft-section,
+.about-section,
+.contact-page {
+  background:
+    radial-gradient(circle at 10% 15%, rgba(0, 186, 196, 0.16) 0, transparent 40%),
+    radial-gradient(circle at 90% 85%, rgba(99, 102, 241, 0.10) 0, transparent 40%),
+    radial-gradient(rgba(8, 43, 73, 0.06) 1.2px, transparent 1.2px),
+    linear-gradient(180deg, #eef6fc 0%, #e3f1f9 100%);
+  background-size: auto, auto, 24px 24px, auto;
+}
+
+/* cards stay white and pop on the tinted background */
+.product-card,
+.catalog-card,
+.service-card,
+.specialty-card,
+.history-card,
+.enquiry-form,
+.contact-card,
+.review-card,
+.review-summary,
+.review-form,
+.shop-map-info,
+.faq-item,
+.enhanced-card,
+.part-card,
+.problem-card,
+.process-card {
+  background: #fff;
+  box-shadow: 0 10px 30px rgba(8, 43, 73, 0.09);
+}
+
+/* product image area inside cards */
+.product-image {
+  background: linear-gradient(135deg, #eaf8fb, #e4eefc);
+}
+
+/* help strip and light panels */
+.help-strip,
+.parts-panel,
+.repair-cross-link {
+  background: linear-gradient(120deg, #e3f7f9, #e6efff);
+  border: 1px solid rgba(0, 186, 196, 0.2);
+}
+
+/* footer gap above: keep page tint, no white strip */
+.footer { margin-top: 0; }
+/* ===== Login / Register: light page + gradient card ===== */
+.auth-page {
+  background:
+    radial-gradient(circle at 10% 15%, rgba(0, 186, 196, 0.16) 0, transparent 40%),
+    radial-gradient(circle at 90% 85%, rgba(99, 102, 241, 0.10) 0, transparent 40%),
+    radial-gradient(rgba(8, 43, 73, 0.06) 1.2px, transparent 1.2px),
+    linear-gradient(180deg, #eef6fc 0%, #e3f1f9 100%);
+  background-size: auto, auto, 24px 24px, auto;
+}
+
+.auth-card {
+  background: linear-gradient(120deg, #082b49 0%, #0b5a85 55%, #00a9b5 100%);
+  box-shadow: 0 18px 40px rgba(8, 43, 73, 0.25);
+}
+.auth-card h1 { color: #fff; }
+.auth-card .auth-sub { color: #9ff3f7; }
+.auth-card label { color: #fff; }
+.auth-card input {
+  background: #fff;
+  border-color: transparent;
+}
+.auth-card .auth-show { color: #008f99; }
+
+.auth-card .auth-btn {
+  background: #fff;
+  color: #082b49;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+  transition: background 0.2s, color 0.2s, transform 0.2s;
+}
+.auth-card .auth-btn:hover:not(:disabled) {
+  background: #35d5dc;
+  color: #031d34;
+  transform: translateY(-2px);
+}
+
+.auth-switch { color: #d9eaf3; }
+.auth-switch a { color: #35d5dc; }
+/* ===== Login card text fix ===== */
+.auth-card h1,
+.auth-card h2,
+.auth-card h3 {
+  color: #fff !important;
+}
+.auth-card .auth-sub,
+.auth-card p {
+  color: #d9eaf3;
+}
+.auth-card .auth-error {
+  color: #b42318;
+}
