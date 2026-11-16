@@ -1160,6 +1160,9 @@ export default function AdminDashboard() {
   const adminDetails = JSON.parse(
     localStorage.getItem("adminDetails") || "{}"
   );
+    const displayName =
+    (adminDetails.name || "").replace(/\s*admin\s*$/i, "").trim() ||
+    "Aquatic Enterprises";
 
   function handleLogout() {
     localStorage.removeItem("adminToken");
