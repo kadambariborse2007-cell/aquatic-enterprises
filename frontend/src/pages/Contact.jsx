@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import SectionHeading from "../components/SectionHeading.jsx";
+import useBusiness from "../useBusiness";
 
 const API_URL = "http://127.0.0.1:8001/enquiries";
-const WHATSAPP_NUMBER = "919220770110";
-const EMAIL_ADDRESS = "aquaticajay@gmail.com";
 
 const enquiryTypes = [
   { value: "pump", label: "New Pump Enquiry" },
@@ -14,6 +13,9 @@ const enquiryTypes = [
 ];
 
 export default function Contact() {
+  const business = useBusiness();
+  const phoneLink = business.phone.replace(/\s+/g, "");
+
   const [searchParams] = useSearchParams();
   const [type, setType] = useState(searchParams.get("type") || "general");
   const [status, setStatus] = useState("");
@@ -74,7 +76,7 @@ Thank you.
 
     // Open the selected sending option
     if (method === "whatsapp") {
-      const whatsappURL = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
+      const whatsappURL = `https://wa.me/${business.whatsapp}?text=${encodeURIComponent(
         enquiryMessage
       )}`;
 
@@ -84,7 +86,7 @@ Thank you.
       const body = encodeURIComponent(enquiryMessage);
 
       // Opens the mail app without leaving a blank tab behind
-      window.location.href = `mailto:${EMAIL_ADDRESS}?subject=${subject}&body=${body}`;
+      window.location.href = `mailto:${business.email}?subject=${subject}&body=${body}`;
     }
 
     // Save the enquiry in PostgreSQL
@@ -314,20 +316,20 @@ Thank you.
             <p>
               <strong>Phone</strong>
               <br />
-              <a href="tel:+919220770110">+91 9220770110</a>
+              <a href={`tel:${phoneLink}`}>{business.phone}</a>
             </p>
 
             <p>
               <strong>Email</strong>
               <br />
-              <a href="mailto:aquaticajay@gmail.com">aquaticajay@gmail.com</a>
+              <a href={`mailto:${business.email}`}>{business.email}</a>
             </p>
 
             <p>
               <strong>WhatsApp</strong>
               <br />
               <a
-                href={`https://wa.me/${WHATSAPP_NUMBER}`}
+                href={`https://wa.me/${business.whatsapp}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="whatsapp-link"
@@ -339,9 +341,16 @@ Thank you.
             <p>
               <strong>Location</strong>
               <br />
-              Ganpatipada, Old Thane-Belapur Road, Near Hindalco Company, Opp.
-              Vitawa, Thane - 400605
+              {business.address}
             </p>
+
+            {business.working_hours && (
+              <p>
+                <strong>Working Hours</strong>
+                <br />
+                {business.working_hours}
+              </p>
+            )}
 
             <div className="contact-note">
               <strong>What happens next?</strong>

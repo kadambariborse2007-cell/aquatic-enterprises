@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchAdminReviews, setReviewStatus, deleteReview } from "../api";
 import ProductsManager from "../components/ProductsManager";
+import BusinessManager from "../components/BusinessManager";
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -145,6 +146,7 @@ export default function AdminDashboard() {
         </section>
 
         <ProductsManager />
+        <BusinessManager />
       </main>
     </div>
   );

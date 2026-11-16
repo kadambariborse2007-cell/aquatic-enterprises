@@ -187,3 +187,28 @@ export function imageUrl(path) {
   }
   return path;
 }
+
+export async function fetchBusiness() {
+  const response = await fetch(`${API_BASE_URL}/business`);
+
+  if (!response.ok) {
+    throw new Error("Could not load business details");
+  }
+
+  return response.json();
+}
+
+export async function updateBusiness(data) {
+  const response = await fetch(`${API_BASE_URL}/admin/business`, {
+    method: "PUT",
+    headers: getAdminHeaders(),
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.detail || "Could not save business details");
+  }
+
+  return response.json();
+}
