@@ -39,3 +39,12 @@ def create_token(username: str) -> str:
 
 def decode_token(token: str) -> dict:
     return jwt.decode(token, _secret(), algorithms=["HS256"])
+
+def create_admin_token(email: str) -> str:
+    payload = {
+        "sub": email,
+        "role": "admin",
+        "exp": datetime.datetime.now(datetime.timezone.utc)
+        + datetime.timedelta(hours=8),
+    }
+    return jwt.encode(payload, _secret(), algorithm="HS256")

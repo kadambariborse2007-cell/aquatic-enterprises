@@ -1,4 +1,4 @@
-
+﻿
 import os
 
 from fastapi import FastAPI, HTTPException, Header
@@ -21,7 +21,10 @@ from auth import (
 app = FastAPI(title="Aquatic Enterprises API")
 
 from reviews import router as reviews_router
+from admin import router as admin_router
+
 app.include_router(reviews_router)
+app.include_router(admin_router)
 
 
 # --------------------------------------------------
@@ -344,3 +347,4 @@ def create_enquiry(data: EnquiryData):
             status_code=500,
             detail="Unable to save your enquiry. Please try again."
         )
+
