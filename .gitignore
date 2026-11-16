@@ -17,3 +17,8 @@ dist/
 .vscode/
 .DS_Store
 backend/uploads/
+
+# Database dumps
+*.sql
+
+neon.txt
