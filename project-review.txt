@@ -1,0 +1,1371 @@
+ AQUATIC ENTERPRISES - SOURCE CODE REVIEW 
+
+
+========== backend\admin.py ==========
+from fastapi import APIRouter, HTTPException, Header
+from pydantic import BaseModel, EmailStr
+
+from database import get_connection
+from auth import verify_password, create_admin_token, decode_token
+
+router = APIRouter(prefix="/admin", tags=["Admin"])
+
+
+class AdminLoginData(BaseModel):
+    email: EmailStr
+    password: str
+
+
+def require_admin(authorization: str = Header(None)):
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Admin login required.")
+
+    token = authorization.split(" ", 1)[1]
+
+    try:
+        payload = decode_token(token)
+
+        if payload.get("role") != "admin":
+            raise HTTPException(status_code=403, detail="Admin access only.")
+
+        email = payload.get("sub")
+
+        with get_connection() as connection:
+            admin = connection.execute(
+                "SELECT id, name, email FROM admins WHERE email = %s",
+                (email,)
+            ).fetchone()
+
+        if not admin:
+            raise HTTPException(status_code=401, detail="Admin account not found.")
+
+        return {
+            "id": admin[0],
+            "name": admin[1],
+            "email": admin[2]
+        }
+
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid or expired admin token.")
+
+
+@router.post("/login")
+def admin_login(data: AdminLoginData):
+    email = str(data.email).strip().lower()
+
+    with get_connection() as connection:
+        admin = connection.execute(
+            """
+            SELECT id, name, email, password_hash
+            FROM admins
+            WHERE email = %s
+            """,
+            (email,)
+        ).fetchone()
+
+    if not admin or not verify_password(data.password, admin[3]):
+        raise HTTPException(status_code=401, detail="Invalid admin email or password.")
+
+    token = create_admin_token(admin[2])
+
+    return {
+        "success": True,
+        "message": "Admin login successful.",
+        "access_token": token,
+        "token_type": "bearer",
+        "admin": {
+            "id": admin[0],
+            "name": admin[1],
+            "email": admin[2]
+        }
+    }
+
+
+@router.get("/me")
+def admin_me(authorization: str = Header(None)):
+    return require_admin(authorization)
+
+
+========== backend\auth.py ==========
+import os
+import hmac
+import hashlib
+import secrets
+import datetime
+
+import jwt
+
+
+def hash_password(password: str) -> str:
+    salt = secrets.token_bytes(16)
+    key = hashlib.scrypt(password.encode(), salt=salt, n=16384, r=8, p=1)
+    return salt.hex() + ":" + key.hex()
+
+
+def verify_password(password: str, stored: str) -> bool:
+    salt_hex, key_hex = stored.split(":")
+    key = hashlib.scrypt(
+        password.encode(), salt=bytes.fromhex(salt_hex), n=16384, r=8, p=1
+    )
+    return hmac.compare_digest(key.hex(), key_hex)
+
+
+def _secret() -> str:
+    secret = os.getenv("JWT_SECRET")
+    if not secret:
+        raise RuntimeError("JWT_SECRET is not set.")
+    return secret
+
+
+def create_token(username: str) -> str:
+    payload = {
+        "sub": username,
+        "exp": datetime.datetime.now(datetime.timezone.utc)
+        + datetime.timedelta(hours=8),
+    }
+    return jwt.encode(payload, _secret(), algorithm="HS256")
+
+
+def decode_token(token: str) -> dict:
+    return jwt.decode(token, _secret(), algorithms=["HS256"])
+
+def create_admin_token(email: str) -> str:
+    payload = {
+        "sub": email,
+        "role": "admin",
+        "exp": datetime.datetime.now(datetime.timezone.utc)
+        + datetime.timedelta(hours=8),
+    }
+    return jwt.encode(payload, _secret(), algorithm="HS256")
+
+
+========== backend\database.py ==========
+import os
+import psycopg
+from dotenv import load_dotenv
+
+load_dotenv()
+
+load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
+def get_connection():
+    database_url = os.getenv("DATABASE_URL")
+    password = os.getenv("DB_PASSWORD")
+
+    if not database_url:
+        raise RuntimeError("DATABASE_URL is not set.")
+
+    if not password:
+        raise RuntimeError("DB_PASSWORD is not set.")
+
+    return psycopg.connect(
+        database_url,
+        password=password
+    )
+
+
+========== backend\main.py ==========
+
+import os
+
+from fastapi import FastAPI, HTTPException, Header
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, EmailStr
+
+from database import get_connection
+from auth import (
+    hash_password,
+    verify_password,
+    create_token,
+    decode_token,
+)
+
+
+# --------------------------------------------------
+# FASTAPI APPLICATION
+# --------------------------------------------------
+
+app = FastAPI(title="Aquatic Enterprises API")
+
+from reviews import router as reviews_router
+from admin import router as admin_router
+
+app.include_router(reviews_router)
+app.include_router(admin_router)
+
+
+# --------------------------------------------------
+# CORS CONFIGURATION
+# --------------------------------------------------
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+# --------------------------------------------------
+# HOME & HEALTH CHECK
+# --------------------------------------------------
+
+@app.get("/")
+def home():
+    return {
+        "message": "Aquatic Enterprises backend is running!"
+    }
+
+
+@app.get("/health")
+def health_check():
+    return {
+        "status": "healthy"
+    }
+
+
+@app.get("/db-health")
+def database_health_check():
+
+    print(
+        "DATABASE_URL set:",
+        bool(os.getenv("DATABASE_URL"))
+    )
+
+    print(
+        "DB_PASSWORD set:",
+        bool(os.getenv("DB_PASSWORD"))
+    )
+
+    try:
+        with get_connection() as connection:
+
+            result = connection.execute(
+                "SELECT current_database()"
+            ).fetchone()
+
+        return {
+            "status": "connected",
+            "database": result[0]
+        }
+
+    except Exception as error:
+
+        print("Database error:", repr(error), flush=True)
+
+        raise HTTPException(
+            status_code=500,
+            detail="Database connection failed."
+        )
+
+
+# --------------------------------------------------
+# REQUEST MODELS
+# --------------------------------------------------
+
+class RegisterData(BaseModel):
+    name: str
+    email: EmailStr
+    phone: str | None = None
+    password: str
+
+
+class LoginData(BaseModel):
+    email: EmailStr
+    password: str
+
+
+class EnquiryData(BaseModel):
+    enquiry_type: str
+    full_name: str
+    email: EmailStr
+    phone: str
+    company: str | None = None
+    message: str
+
+
+# --------------------------------------------------
+# CUSTOMER REGISTRATION
+# --------------------------------------------------
+
+@app.post("/register")
+def register(data: RegisterData):
+
+    email = str(data.email).strip().lower()
+
+    if len(data.password) < 8:
+        raise HTTPException(
+            status_code=400,
+            detail="Password must be at least 8 characters."
+        )
+
+    try:
+        with get_connection() as connection:
+
+            exists = connection.execute(
+                "SELECT id FROM customers WHERE email = %s",
+                (email,)
+            ).fetchone()
+
+            if exists:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Email already registered."
+                )
+
+            connection.execute(
+                """
+                INSERT INTO customers
+                (name, email, phone, password_hash)
+                VALUES (%s, %s, %s, %s)
+                """,
+                (
+                    data.name.strip(),
+                    email,
+                    data.phone,
+                    hash_password(data.password)
+                )
+            )
+
+            connection.commit()
+
+        return {
+            "token": create_token(email),
+            "name": data.name.strip()
+        }
+
+    except HTTPException:
+        raise
+
+    except Exception as error:
+
+        print("Registration error:", repr(error))
+
+        raise HTTPException(
+            status_code=500,
+            detail="Unable to register customer."
+        )
+
+
+# --------------------------------------------------
+# CUSTOMER LOGIN
+# --------------------------------------------------
+
+@app.post("/login")
+def login(data: LoginData):
+
+    email = str(data.email).strip().lower()
+
+    try:
+        with get_connection() as connection:
+
+            row = connection.execute(
+                """
+                SELECT name, password_hash
+                FROM customers
+                WHERE email = %s
+                """,
+                (email,)
+            ).fetchone()
+
+        if not row or not verify_password(
+            data.password,
+            row[1]
+        ):
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid email or password."
+            )
+
+        return {
+            "token": create_token(email),
+            "name": row[0]
+        }
+
+    except HTTPException:
+        raise
+
+    except Exception as error:
+
+        print("Login error:", repr(error))
+
+        raise HTTPException(
+            status_code=500,
+            detail="Unable to login. Please try again."
+        )
+
+
+# --------------------------------------------------
+# GET LOGGED-IN CUSTOMER PROFILE
+# --------------------------------------------------
+
+@app.get("/me")
+def me(
+    authorization: str | None = Header(default=None)
+):
+
+    if not authorization or not authorization.startswith("Bearer "):
+
+        raise HTTPException(
+            status_code=401,
+            detail="Not logged in."
+        )
+
+    try:
+        payload = decode_token(
+            authorization.split(" ", 1)[1]
+        )
+
+    except Exception:
+
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid or expired token."
+        )
+
+    try:
+        with get_connection() as connection:
+
+            row = connection.execute(
+                """
+                SELECT name, email, phone
+                FROM customers
+                WHERE email = %s
+                """,
+                (payload["sub"],)
+            ).fetchone()
+
+        if not row:
+
+            raise HTTPException(
+                status_code=401,
+                detail="User not found."
+            )
+
+        return {
+            "name": row[0],
+            "email": row[1],
+            "phone": row[2]
+        }
+
+    except HTTPException:
+        raise
+
+    except Exception as error:
+
+        print("Profile error:", repr(error))
+
+        raise HTTPException(
+            status_code=500,
+            detail="Unable to load customer profile."
+        )
+
+
+# --------------------------------------------------
+# CUSTOMER ENQUIRY SUBMISSION
+# --------------------------------------------------
+
+@app.post("/enquiries")
+def create_enquiry(data: EnquiryData):
+
+    try:
+
+        with get_connection() as connection:
+
+            connection.execute(
+                """
+                INSERT INTO enquiries
+                (
+                    enquiry_type,
+                    full_name,
+                    email,
+                    phone,
+                    company,
+                    message
+                )
+                VALUES (%s, %s, %s, %s, %s, %s)
+                """,
+                (
+                    data.enquiry_type.strip(),
+                    data.full_name.strip(),
+                    str(data.email).strip().lower(),
+                    data.phone.strip(),
+                    data.company.strip() if data.company else None,
+                    data.message.strip()
+                )
+            )
+
+            connection.commit()
+
+        return {
+            "success": True,
+            "message": "Your enquiry has been submitted successfully."
+        }
+
+    except Exception as error:
+
+        print("Enquiry submission error:", repr(error))
+
+        raise HTTPException(
+            status_code=500,
+            detail="Unable to save your enquiry. Please try again."
+        )
+
+
+
+========== backend\reviews.py ==========
+"""
+Customer reviews API (FastAPI + PostgreSQL).
+
+Flow: visitor submits a review -> saved as "pending" -> admin approves it ->
+only "approved" reviews appear on the website.
+
+Uses the same get_connection() as the rest of the project.
+Needs ADMIN_KEY in backend/.env (temporary admin protection).
+"""
+
+import hmac
+import os
+import time
+from collections import defaultdict, deque
+from typing import Literal, Optional
+
+from fastapi import APIRouter, Depends, Header, HTTPException, Request
+from pydantic import BaseModel, ConfigDict, Field
+
+from database import get_connection
+
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv()
+except ImportError:
+    pass
+
+router = APIRouter()
+
+# ---------- table (created automatically on first use) ----------
+_table_ready = False
+
+
+def _ensure_table(connection) -> None:
+    global _table_ready
+    if _table_ready:
+        return
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS reviews (
+            id         SERIAL PRIMARY KEY,
+            name       VARCHAR(80)  NOT NULL,
+            rating     SMALLINT     NOT NULL CHECK (rating BETWEEN 1 AND 5),
+            comment    TEXT         NOT NULL,
+            status     VARCHAR(10)  NOT NULL DEFAULT 'pending',
+            created_at TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+        )
+        """
+    )
+    connection.commit()
+    _table_ready = True
+
+
+# ---------- schemas ----------
+class ReviewIn(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    name: str = Field(min_length=2, max_length=80)
+    rating: int = Field(ge=1, le=5)
+    comment: str = Field(min_length=5, max_length=1000)
+
+
+class StatusIn(BaseModel):
+    status: Literal["pending", "approved", "rejected"]
+
+
+# ---------- spam protection: 3 reviews per IP per hour ----------
+RATE_LIMIT = 3
+RATE_WINDOW = 3600
+_recent = defaultdict(deque)
+
+
+def _check_rate_limit(ip: str) -> None:
+    now = time.time()
+    queue = _recent[ip]
+    while queue and now - queue[0] > RATE_WINDOW:
+        queue.popleft()
+    if len(queue) >= RATE_LIMIT:
+        raise HTTPException(429, "Too many reviews. Please try again later.")
+    queue.append(now)
+
+
+# ---------- temporary admin protection ----------
+def require_admin_key(x_admin_key: Optional[str] = Header(default=None)) -> None:
+    expected = os.getenv("ADMIN_KEY")
+    if not expected or not x_admin_key or not hmac.compare_digest(x_admin_key, expected):
+        raise HTTPException(401, "Admin access required.")
+
+
+def _to_dict(row, with_status: bool = False) -> dict:
+    data = {
+        "id": row[0],
+        "name": row[1],
+        "rating": row[2],
+        "comment": row[3],
+    }
+    if with_status:
+        data["status"] = row[4]
+        data["created_at"] = row[5].isoformat()
+    else:
+        data["created_at"] = row[4].isoformat()
+    return data
+
+
+def _server_error(label: str, error: Exception):
+    print(f"{label}:", repr(error), flush=True)
+    return HTTPException(500, "Something went wrong. Please try again.")
+
+
+# ---------- public endpoints ----------
+@router.post("/reviews", status_code=201)
+def create_review(review: ReviewIn, request: Request):
+    ip = request.client.host if request.client else "unknown"
+    _check_rate_limit(ip)
+
+    try:
+        with get_connection() as connection:
+            _ensure_table(connection)
+            connection.execute(
+                "INSERT INTO reviews (name, rating, comment) VALUES (%s, %s, %s)",
+                (review.name, review.rating, review.comment),
+            )
+            connection.commit()
+    except Exception as error:
+        raise _server_error("Review submit error", error)
+
+    return {"message": "Thank you! Your review will appear after approval."}
+
+
+@router.get("/reviews")
+def list_approved_reviews(limit: int = 50):
+    limit = max(1, min(limit, 100))
+    try:
+        with get_connection() as connection:
+            _ensure_table(connection)
+            rows = connection.execute(
+                "SELECT id, name, rating, comment, created_at FROM reviews "
+                "WHERE status = 'approved' ORDER BY created_at DESC LIMIT %s",
+                (limit,),
+            ).fetchall()
+    except Exception as error:
+        raise _server_error("Review list error", error)
+
+    return [_to_dict(row) for row in rows]
+
+
+@router.get("/reviews/summary")
+def reviews_summary():
+    try:
+        with get_connection() as connection:
+            _ensure_table(connection)
+            rows = connection.execute(
+                "SELECT rating, COUNT(*) FROM reviews "
+                "WHERE status = 'approved' GROUP BY rating"
+            ).fetchall()
+    except Exception as error:
+        raise _server_error("Review summary error", error)
+
+    breakdown = {str(star): 0 for star in range(1, 6)}
+    for rating, total in rows:
+        breakdown[str(rating)] = total
+
+    count = sum(breakdown.values())
+    average = (
+        round(sum(int(star) * total for star, total in breakdown.items()) / count, 1)
+        if count
+        else 0
+    )
+    return {"average": average, "count": count, "breakdown": breakdown}
+
+
+# ---------- admin endpoints ----------
+@router.get("/admin/reviews", dependencies=[Depends(require_admin_key)])
+def admin_list_reviews(status: Optional[str] = None):
+    query = "SELECT id, name, rating, comment, status, created_at FROM reviews"
+    params = ()
+    if status:
+        query += " WHERE status = %s"
+        params = (status,)
+    query += " ORDER BY created_at DESC"
+
+    try:
+        with get_connection() as connection:
+            _ensure_table(connection)
+            rows = connection.execute(query, params).fetchall()
+    except Exception as error:
+        raise _server_error("Admin review list error", error)
+
+    return [_to_dict(row, with_status=True) for row in rows]
+
+
+@router.patch("/admin/reviews/{review_id}", dependencies=[Depends(require_admin_key)])
+def admin_set_status(review_id: int, body: StatusIn):
+    try:
+        with get_connection() as connection:
+            _ensure_table(connection)
+            result = connection.execute(
+                "UPDATE reviews SET status = %s WHERE id = %s",
+                (body.status, review_id),
+            )
+            updated = result.rowcount
+            connection.commit()
+    except Exception as error:
+        raise _server_error("Admin review update error", error)
+
+    if updated == 0:
+        raise HTTPException(404, "Review not found.")
+    return {"id": review_id, "status": body.status}
+
+
+@router.delete("/admin/reviews/{review_id}", dependencies=[Depends(require_admin_key)])
+def admin_delete_review(review_id: int):
+    try:
+        with get_connection() as connection:
+            _ensure_table(connection)
+            result = connection.execute("DELETE FROM reviews WHERE id = %s", (review_id,))
+            deleted = result.rowcount
+            connection.commit()
+    except Exception as error:
+        raise _server_error("Admin review delete error", error)
+
+    if deleted == 0:
+        raise HTTPException(404, "Review not found.")
+    return {"deleted": review_id}
+
+
+========== backend\requirements.txt ==========
+annotated-doc==0.0.5
+annotated-types==0.8.0
+anyio==4.15.1
+click==8.5.0
+dnspython==2.9.2
+email-validator==2.3.0
+fastapi==0.162.0
+h11==0.16.0
+httptools==0.9.0
+idna==3.20
+immutabledict==4.3.1
+opentelemetry-api==1.45.1
+psycopg==3.3.6
+psycopg-binary==3.3.6
+pydantic==2.14.1
+pydantic_core==2.50.1
+PyJWT==2.15.1
+python-dotenv==1.2.4
+PyYAML==6.0.3
+SQLAlchemy==2.1.6
+starlette==1.10.0
+typing-inspection==0.4.4
+typing_extensions==4.16.0
+tzdata==2026.6
+uvicorn==0.54.0
+watchfiles==1.3.0
+websockets==17.3
+
+
+========== frontend\src\api.js ==========
+
+const API_BASE_URL = "http://127.0.0.1:8001";
+
+export async function checkBackendHealth() {
+  const response = await fetch(`${API_BASE_URL}/health`);
+
+  if (!response.ok) {
+    throw new Error("Backend health check failed");
+  }
+
+  return response.json();
+}
+
+export async function checkDatabaseHealth() {
+  const response = await fetch(`${API_BASE_URL}/db-health`);
+
+  if (!response.ok) {
+    throw new Error("Database health check failed");
+  }
+
+  return response.json();
+}
+
+
+========== frontend\src\App.jsx ==========
+
+import { Navigate, Route, Routes } from "react-router-dom";
+
+import Header from "./components/Header.jsx";
+import Footer from "./components/Footer.jsx";
+import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import AdminProtectedRoute from "./components/AdminProtectedRoute.jsx";
+
+import Home from "./pages/Home.jsx";
+import About from "./pages/About.jsx";
+import Products from "./pages/Products.jsx";
+import Contact from "./pages/Contact.jsx";
+import Login from "./pages/Login.jsx";
+import Register from "./pages/Register.jsx";
+import Account from "./pages/Account.jsx";
+import CategoryPage from "./pages/CategoryPage";
+import Shop from "./pages/Shop.jsx";
+
+import AdminLogin from "./pages/AdminLogin.jsx";
+import AdminDashboard from "./pages/AdminDashboard.jsx";
+
+import "./App.css";
+
+function PublicLayout() {
+  return (
+    <>
+      <Header />
+      <main className="site-main">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/products" element={<Products />} />
+          <Route
+            path="/products/new-pumps"
+            element={<Products initialTab="pumps" />}
+          />
+          <Route
+            path="/products/services"
+            element={<Products initialTab="service" />}
+          />
+          <Route
+            path="/products/spare-parts"
+            element={<Products initialTab="parts" />}
+          />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/shop" element={<Shop />} />
+          <Route
+            path="/reviews"
+            element={<Navigate to="/shop" replace />}
+          />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route
+            path="/account"
+            element={
+              <ProtectedRoute>
+                <Account />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/category/:slug" element={<CategoryPage />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </main>
+      <Footer />
+    </>
+  );
+}
+
+export default function App() {
+  return (
+    <Routes>
+      <Route path="/admin/login" element={<AdminLogin />} />
+
+      <Route
+        path="/admin/dashboard"
+        element={
+          <AdminProtectedRoute>
+            <AdminDashboard />
+          </AdminProtectedRoute>
+        }
+      />
+
+      <Route path="/admin/*" element={<Navigate to="/admin/login" replace />} />
+
+      <Route path="/*" element={<PublicLayout />} />
+    </Routes>
+  );
+}
+
+
+========== frontend\src\AuthContext.jsx ==========
+import { createContext, useContext, useState, useEffect } from "react";
+
+const API = "http://127.0.0.1:8001";
+const AuthContext = createContext(null);
+
+async function post(path, body) {
+  const res = await fetch(`${API}${path}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const d = data.detail;
+    throw new Error(typeof d === "string" ? d : "Please check your details and try again.");
+  }
+  return data;
+}
+
+export function AuthProvider({ children }) {
+  const [token, setToken] = useState(localStorage.getItem("token"));
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(!!localStorage.getItem("token"));
+
+  useEffect(() => {
+    if (!token) {
+      setUser(null);
+      setLoading(false);
+      return;
+    }
+    fetch(`${API}/me`, { headers: { Authorization: `Bearer ${token}` } })
+      .then((r) => {
+        if (!r.ok) throw new Error();
+        return r.json();
+      })
+      .then(setUser)
+      .catch(() => {
+        localStorage.removeItem("token");
+        setToken(null);
+        setUser(null);
+      })
+      .finally(() => setLoading(false));
+  }, [token]);
+
+  const saveToken = (t) => {
+    localStorage.setItem("token", t);
+    setToken(t);
+  };
+
+  const login = async (email, password) => {
+    const data = await post("/login", { email, password });
+    saveToken(data.token);
+  };
+
+  const register = async (name, email, phone, password) => {
+    const data = await post("/register", { name, email, phone, password });
+    saveToken(data.token);
+  };
+
+  const logout = () => {
+    localStorage.removeItem("token");
+    setToken(null);
+    setUser(null);
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, token, loading, login, register, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export function useAuth() {
+  return useContext(AuthContext);
+}
+
+
+========== frontend\src\main.jsx ==========
+
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import { BrowserRouter } from "react-router-dom";
+
+import "./index.css";
+import App from "./App.jsx";
+import { AuthProvider } from "./AuthContext.jsx";
+
+createRoot(document.getElementById("root")).render(
+  <StrictMode>
+    <BrowserRouter>
+      <AuthProvider>
+        <App />
+      </AuthProvider>
+    </BrowserRouter>
+  </StrictMode>
+);
+
+
+========== frontend\src\components\AdminProtectedRoute.jsx ==========
+import { Navigate } from "react-router-dom";
+
+export default function AdminProtectedRoute({ children }) {
+  const adminToken = localStorage.getItem("adminToken");
+
+  if (!adminToken) {
+    return <Navigate to="/admin/login" replace />;
+  }
+
+  return children;
+}
+
+
+========== frontend\src\pages\AdminLogin.jsx ==========
+
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+
+const API_BASE_URL = "http://127.0.0.1:8001";
+
+export default function AdminLogin() {
+  const navigate = useNavigate();
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function handleLogin(event) {
+    event.preventDefault();
+    setError("");
+    setLoading(true);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.detail || "Admin login failed.");
+      }
+
+      localStorage.setItem("adminToken", data.access_token);
+      localStorage.setItem("adminDetails", JSON.stringify(data.admin));
+
+      navigate("/admin/dashboard");
+    } catch (error) {
+      setError(error.message || "Unable to connect to the server.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div style={styles.page}>
+      <form onSubmit={handleLogin} style={styles.card}>
+        <h1 style={styles.heading}>Aquatic Enterprises</h1>
+        <p style={styles.subtitle}>Administrator Login</p>
+
+        {error && <p style={styles.error}>{error}</p>}
+
+        <label style={styles.label}>Admin Email</label>
+        <input
+          type="email"
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+          placeholder="Enter admin email"
+          required
+          style={styles.input}
+        />
+
+        <label style={styles.label}>Password</label>
+        <input
+          type="password"
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+          placeholder="Enter admin password"
+          required
+          style={styles.input}
+        />
+
+        <button type="submit" disabled={loading} style={styles.button}>
+          {loading ? "Logging in..." : "Login to Dashboard"}
+        </button>
+      </form>
+    </div>
+  );
+}
+
+const styles = {
+  page: {
+    minHeight: "100vh",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    background: "#eef5fa",
+    padding: "20px",
+  },
+  card: {
+    width: "100%",
+    maxWidth: "420px",
+    padding: "36px",
+    background: "#ffffff",
+    borderRadius: "14px",
+    boxShadow: "0 8px 30px rgba(8, 43, 73, 0.12)",
+  },
+  heading: {
+    color: "#082b49",
+    textAlign: "center",
+    marginBottom: "8px",
+  },
+  subtitle: {
+    color: "#64748b",
+    textAlign: "center",
+    marginBottom: "28px",
+  },
+  label: {
+    display: "block",
+    color: "#082b49",
+    fontWeight: "600",
+    marginBottom: "8px",
+  },
+  input: {
+    width: "100%",
+    boxSizing: "border-box",
+    padding: "12px",
+    marginBottom: "20px",
+    border: "1px solid #cbd5e1",
+    borderRadius: "7px",
+    fontSize: "15px",
+  },
+  button: {
+    width: "100%",
+    padding: "13px",
+    background: "#087eaa",
+    color: "#ffffff",
+    border: "none",
+    borderRadius: "7px",
+    fontWeight: "600",
+    fontSize: "15px",
+    cursor: "pointer",
+  },
+  error: {
+    background: "#fee2e2",
+    color: "#b91c1c",
+    padding: "10px",
+    borderRadius: "6px",
+    marginBottom: "18px",
+  },
+};
+
+
+========== frontend\src\pages\AdminDashboard.jsx ==========
+import { useNavigate } from "react-router-dom";
+
+export default function AdminDashboard() {
+  const navigate = useNavigate();
+
+  const adminDetails = JSON.parse(
+    localStorage.getItem("adminDetails") || "{}"
+  );
+
+  function handleLogout() {
+    localStorage.removeItem("adminToken");
+    localStorage.removeItem("adminDetails");
+    navigate("/admin/login");
+  }
+
+  return (
+    <div style={styles.page}>
+      <header style={styles.header}>
+        <div>
+          <h1>Aquatic Enterprises</h1>
+          <p>Administrator Dashboard</p>
+        </div>
+
+        <button onClick={handleLogout} style={styles.logoutButton}>
+          Logout
+        </button>
+      </header>
+
+      <main style={styles.content}>
+        <h2>Welcome, {adminDetails.name || "Admin"}!</h2>
+        <p>Manage your website from this dashboard.</p>
+
+        <div style={styles.grid}>
+          <div style={styles.card}>
+            <h3>Products</h3>
+            <p>Manage your water pump products.</p>
+            <span>Coming next</span>
+          </div>
+
+          <div style={styles.card}>
+            <h3>Enquiries</h3>
+            <p>View and manage customer enquiries.</p>
+            <span>Coming next</span>
+          </div>
+
+          <div style={styles.card}>
+            <h3>Reviews</h3>
+            <p>Approve or reject customer reviews.</p>
+            <span>Coming next</span>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
+
+const styles = {
+  page: {
+    minHeight: "100vh",
+    background: "#f1f5f9",
+    fontFamily: "Arial, sans-serif",
+  },
+  header: {
+    background: "#082b49",
+    color: "white",
+    padding: "22px 5%",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  content: {
+    padding: "35px 5%",
+  },
+  grid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+    gap: "22px",
+    marginTop: "30px",
+  },
+  card: {
+    background: "white",
+    padding: "25px",
+    borderRadius: "12px",
+    boxShadow: "0 4px 15px rgba(0,0,0,0.06)",
+  },
+  logoutButton: {
+    padding: "11px 20px",
+    border: "none",
+    borderRadius: "7px",
+    background: "#00bac4",
+    color: "#082b49",
+    fontWeight: "bold",
+    cursor: "pointer",
+  },
+};
+
+
+========== frontend\src\data\categories.js ==========
+// NOTE: Prices are approximate demo values. Replace with actual prices from the client.
+export const categories = [
+  {
+    slug: "borewell-submersible",
+    name: "Borewell Submersible Pumps",
+    image: "/images/borewell-submersible-pumps.jpg",
+    tagline: "Reliable water supply from deep borewells",
+    description:
+      "Borewell submersible pumpsets sit deep inside the borewell and push water up to your tank. They are built for continuous use and are available for 75 mm and 100 mm borewells, in water-filled and oil-filled motor versions.",
+    price: "₹ 12,000 - 25,000",
+    highlights: [
+      "Motor range from 0.5 HP to 3 HP",
+      "Suitable for 75 mm and 100 mm borewells",
+      "Water-filled and oil-filled motor options",
+      "ISI marked and star rated models available",
+      "Supplied with 3 metre cable and non-return valve (NRV)",
+    ],
+    applications: ["Homes and bungalows", "Apartments and societies", "Farms and small irrigation"],
+    series: [
+      { name: "CORA 75 + UMAI", hp: "0.5 – 1.5 HP", info: "For 75 mm borewells, 210V single phase" },
+      { name: "CORA + LX PLUS", hp: "0.5 – 2.0 HP", info: "For 100 mm borewells, 220V, star rated models available" },
+      { name: "CORA + XUMA DX", hp: "0.5 – 2.0 HP", info: "For 100 mm borewells, 220V single phase" },
+      { name: "CORA + RLX", hp: "0.5 – 2.0 HP", info: "For 100 mm borewells, 220V single phase" },
+      { name: "CORA + UMN (Oil Filled)", hp: "0.5 – 3.0 HP", info: "For 100 mm borewells, oil filled motor" },
+    ],
+  },
+  {
+    slug: "self-priming-monobloc",
+    name: "Monobloc & Domestic Pumps",
+    image: "/images/monobloc-domestic-pumps.jpg",
+    tagline: "Everyday water supply for your home",
+    description:
+      "Monobloc pumps are compact surface pumps that lift water from a sump, tank or ground-level source to your overhead tank. Self-priming models start easily and are ideal for daily domestic use.",
+    price: "₹ 4,500 – 9,000",
+    highlights: [
+      "Self-priming design for easy start-up",
+      "0.5 HP to 1.5 HP for domestic models",
+      "Compact and easy to install",
+      "Durable body options: aluminium, die cast and cast iron",
+      "Heavy-duty AGRIBLOC range available for farm use",
+    ],
+    applications: ["Overhead tank filling", "Garden and lawn watering", "Small farm and plantation use"],
+    series: [
+      { name: "AQUA", hp: "0.5 – 1.5 HP", info: "Self-priming monobloc, 25x25 mm, 220V" },
+      { name: "CUTE PLUS", hp: "0.5 – 1.0 HP", info: "Compact mini monobloc, 240V" },
+      { name: "PERISTAR", hp: "0.5 – 1.5 HP", info: "Self-priming monobloc (V, SZX, GS, ZDX models)" },
+      { name: "PERIJET", hp: "0.5 – 1.5 HP", info: "Self-priming jet pump, 230V" },
+      { name: "TSJ", hp: "1.0 HP", info: "Two-stage jet pump" },
+      { name: "AGRIBLOC", hp: "0.5 – 3.0 HP", info: "Centrifugal monobloc for farm and heavy-duty use" },
+    ],
+  },
+  {
+    slug: "booster",
+    name: "Booster & Pressure Systems",
+    image: "/images/booster-pressure-systems.jpg",
+    tagline: "Strong, steady water pressure at every tap",
+    description:
+      "Booster systems raise the pressure of your existing water supply so showers, taps and upper floors get a strong, steady flow. Multistage models come with a pressure tank for smooth, quiet operation.",
+    price: "₹ 8,000 – 16,000",
+    highlights: [
+      "Automatic start and stop with pressure control",
+      "Multistage models with pressure tank",
+      "0.5 HP to 2 HP options",
+      "Suitable for multiple shower heads",
+      "Quiet and energy-efficient operation",
+    ],
+    applications: ["Bathrooms and showers", "Upper floors and duplexes", "Hotels, hostels and small buildings"],
+    series: [
+      { name: "MULTIBOOST", hp: "0.5 – 2.0 HP", info: "Multistage pressure booster system, 220V" },
+      { name: "PERIBOOST PLUS", hp: "0.5 – 1.0 HP", info: "Compact pressure booster, 220V" },
+    ],
+  },
+  {
+    slug: "openwell-submersible",
+    name: "Openwell & Vertical Pumps",
+    image: "/images/openwell-vertical-pumps.jpg",
+    tagline: "Powerful pumping from open wells and tanks",
+    description:
+      "Openwell submersible pumps work inside open wells, tanks and ponds. Horizontal monobloc and vertical multistage models are available, covering both high-flow irrigation needs and high-head domestic supply.",
+    price: "₹ 9,000 – 18,000",
+    highlights: [
+      "Horizontal monobloc and vertical multistage designs",
+      "0.5 HP to 2 HP options",
+      "Single phase and three phase models",
+      "Star rated and ISI marked models available",
+      "Stainless steel models for long life",
+    ],
+    applications: ["Open well water supply", "Irrigation and sprinklers", "Tank and pond pumping"],
+    series: [
+      { name: "OPAL i", hp: "0.5 – 2.0 HP", info: "Openwell submersible monobloc, star rated, 220V" },
+      { name: "MONOSUB R", hp: "0.5 – 2.0 HP", info: "Openwell submersible, single and three phase" },
+      { name: "MULTISUB", hp: "1.0 – 1.5 HP", info: "Vertical multistage openwell submersible, 240V" },
+    ],
+  },
+  {
+    slug: "dewatering-sewage",
+    name: "Dewatering & Sewage Pumps",
+    image: "/images/dewatering-sewage-pumps.jpg",
+    tagline: "Tough pumps for drainage and wastewater",
+    description:
+      "Dewatering and sewage pumps remove water from basements, pits and drains, and handle wastewater containing solids. Built with strong casings and large free passage to resist clogging.",
+    price: "₹ 10,000 – 22,000",
+    highlights: [
+      "Handles dirty water and wastewater with solids",
+      "Free passage from 10 mm up to 100 mm",
+      "Float switch models for automatic operation",
+      "Single phase and three phase options",
+      "Strong, corrosion-resistant construction",
+    ],
+    applications: ["Basement and parking drainage", "Sewage and drain pits", "Construction sites and sumps"],
+    series: [
+      { name: "AMA PORTER", hp: "1.0 – 2.0 HP", info: "Vertical dewatering pump, single and three phase" },
+      { name: "AMA DRAINER", hp: "Not specified", info: "Vertical dewatering pump, 230V" },
+      { name: "KSTP", hp: "1.0 – 3.0 HP", info: "Sewage submersible pump, 50 mm outlet" },
+      { name: "AMAREX IN", hp: "1.1 – 5.6 HP", info: "Wastewater submersible pump, three phase" },
+      { name: "KRTU", hp: "1.5 – 12.7 HP", info: "Non-clog submersible sewage pump" },
+    ],
+  },
+];

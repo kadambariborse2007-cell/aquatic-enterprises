@@ -22,7 +22,26 @@ export default function Footer() {
           <p>Ganpatipada, Old Thane-Belapur Road, Thane - 400605</p>
         </div>
       </div>
-      <div className="footer-bottom">© {new Date().getFullYear()} Aquatic Enterprises. All rights reserved.</div>
+      <div className="footer-bottom">
+  © {new Date().getFullYear()} Aquatic Enterprises. All rights reserved.
+  {" · "}
+  <Link
+  to="/admin/login"
+  style={{
+    display: "inline-block",
+    marginLeft: "12px",
+    padding: "6px 16px",
+    border: "1px solid #00bac4",
+    borderRadius: "20px",
+    color: "#00bac4",
+    fontSize: "15px",
+    fontWeight: "bold",
+    textDecoration: "none",
+  }}
+>
+  Staff Login
+</Link>
+</div>
     </footer>
   );
 }

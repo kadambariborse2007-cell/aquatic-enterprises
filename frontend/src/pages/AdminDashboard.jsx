@@ -1,4 +1,6 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { fetchAdminReviews, setReviewStatus, deleteReview } from "../api";
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -7,10 +9,54 @@ export default function AdminDashboard() {
     localStorage.getItem("adminDetails") || "{}"
   );
 
+  const [reviews, setReviews] = useState([]);
+  const [filter, setFilter] = useState("pending");
+  const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState("");
+
   function handleLogout() {
     localStorage.removeItem("adminToken");
     localStorage.removeItem("adminDetails");
     navigate("/admin/login");
+  }
+
+  async function loadReviews() {
+    setLoading(true);
+    setMessage("");
+
+    try {
+      const data = await fetchAdminReviews(filter);
+      setReviews(data);
+    } catch (error) {
+      setMessage("Could not load reviews. Please log out and log in again.");
+    }
+
+    setLoading(false);
+  }
+
+  useEffect(() => {
+    loadReviews();
+  }, [filter]);
+
+  async function handleStatus(reviewId, status) {
+    try {
+      await setReviewStatus(reviewId, status);
+      loadReviews();
+    } catch (error) {
+      setMessage("Could not update the review. Please try again.");
+    }
+  }
+
+  async function handleDelete(reviewId) {
+    const sure = window.confirm("Delete this review permanently?");
+    if (!sure) return;
+
+    try {
+      await deleteReview(reviewId);
+      loadReviews();
+    } catch (error) {
+      setMessage("Could not delete the review. Please try again.");
+    }
   }
 
   return (
@@ -42,13 +88,72 @@ export default function AdminDashboard() {
             <p>View and manage customer enquiries.</p>
             <span>Coming next</span>
           </div>
-
-          <div style={styles.card}>
-            <h3>Reviews</h3>
-            <p>Approve or reject customer reviews.</p>
-            <span>Coming next</span>
-          </div>
         </div>
+
+        <section style={styles.reviewSection}>
+          <h2>Customer Reviews</h2>
+
+          <div style={styles.filters}>
+            {["pending", "approved", "rejected", ""].map((item) => (
+              <button
+                key={item || "all"}
+                onClick={() => setFilter(item)}
+                style={
+                  filter === item
+                    ? styles.filterButtonActive
+                    : styles.filterButton
+                }
+              >
+                {item === "" ? "All" : item.charAt(0).toUpperCase() + item.slice(1)}
+              </button>
+            ))}
+          </div>
+
+          {message && <p style={styles.error}>{message}</p>}
+
+          {loading && <p>Loading reviews...</p>}
+
+          {!loading && !message && reviews.length === 0 && (
+            <p>No reviews found here.</p>
+          )}
+
+          {!loading &&
+            reviews.map((review) => (
+              <div key={review.id} style={styles.reviewCard}>
+                <div style={styles.reviewTop}>
+                  <strong>{review.name}</strong>
+                  <span>
+                    {"★".repeat(review.rating)}
+                    {"☆".repeat(5 - review.rating)}
+                  </span>
+                  <span style={styles.statusTag}>{review.status}</span>
+                </div>
+
+                <p>{review.comment}</p>
+
+                <div style={styles.actions}>
+                  <button
+                    onClick={() => handleStatus(review.id, "approved")}
+                    style={styles.approveButton}
+                  >
+                    Approve
+                  </button>
+                  <button
+                    onClick={() => handleStatus(review.id, "rejected")}
+                    style={styles.rejectButton}
+                  >
+                    Reject
+                  </button>
+                  <button
+                    onClick={() => handleDelete(review.id)}
+                    style={styles.deleteButton}
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
+        </section>
       </main>
     </div>
   );
@@ -91,5 +196,82 @@ const styles = {
     color: "#082b49",
     fontWeight: "bold",
     cursor: "pointer",
+  },
+  reviewSection: {
+    marginTop: "40px",
+  },
+  filters: {
+    display: "flex",
+    gap: "10px",
+    flexWrap: "wrap",
+    margin: "15px 0",
+  },
+  filterButton: {
+    padding: "9px 16px",
+    border: "1px solid #082b49",
+    borderRadius: "7px",
+    background: "white",
+    color: "#082b49",
+    cursor: "pointer",
+  },
+  filterButtonActive: {
+    padding: "9px 16px",
+    border: "1px solid #082b49",
+    borderRadius: "7px",
+    background: "#082b49",
+    color: "white",
+    cursor: "pointer",
+  },
+  reviewCard: {
+    background: "white",
+    padding: "20px",
+    borderRadius: "12px",
+    boxShadow: "0 4px 15px rgba(0,0,0,0.06)",
+    marginBottom: "15px",
+  },
+  reviewTop: {
+    display: "flex",
+    gap: "15px",
+    alignItems: "center",
+    flexWrap: "wrap",
+  },
+  statusTag: {
+    background: "#e2e8f0",
+    padding: "3px 10px",
+    borderRadius: "20px",
+    fontSize: "13px",
+  },
+  actions: {
+    display: "flex",
+    gap: "10px",
+    flexWrap: "wrap",
+  },
+  approveButton: {
+    padding: "9px 16px",
+    border: "none",
+    borderRadius: "7px",
+    background: "#16a34a",
+    color: "white",
+    cursor: "pointer",
+  },
+  rejectButton: {
+    padding: "9px 16px",
+    border: "none",
+    borderRadius: "7px",
+    background: "#f59e0b",
+    color: "white",
+    cursor: "pointer",
+  },
+  deleteButton: {
+    padding: "9px 16px",
+    border: "none",
+    borderRadius: "7px",
+    background: "#dc2626",
+    color: "white",
+    cursor: "pointer",
+  },
+  error: {
+    color: "#dc2626",
+    fontWeight: "bold",
   },
 };
