@@ -77,13 +77,7 @@ export default function AdminDashboard() {
         <h2>Welcome, {adminDetails.name || "Admin"}!</h2>
         <p>Manage your website from this dashboard.</p>
 
-        <div style={styles.grid}>
-          <div style={styles.card}>
-            <h3>Enquiries</h3>
-            <p>View and manage customer enquiries.</p>
-            <span>Coming next</span>
-          </div>
-        </div>
+    
 
         <section style={styles.reviewSection}>
           <h2>Customer Reviews</h2>

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { categories as fallbackCategories } from "../data/categories";
-import { fetchCategories } from "../api";
+import { fetchCategories, imageUrl } from "../api";
 import "../components/products.css";
 
 export default function CategoryPage() {
@@ -47,7 +47,7 @@ export default function CategoryPage() {
       <Link className="back-btn" to="/products">← Back</Link>
 
       <div className="cat-hero">
-        <img src={cat.image} alt={cat.name} />
+        <img src={imageUrl(cat.image)} alt={cat.name} />
         <div>
           <h2>{cat.name}</h2>
           <p className="cat-tagline">{cat.tagline}</p>

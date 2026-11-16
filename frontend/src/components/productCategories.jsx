@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { categories as fallbackCategories } from "../data/categories";
-import { fetchCategories } from "../api";
+import { fetchCategories, imageUrl } from "../api";
 import "./products.css";
 
 export default function ProductCategories() {
@@ -39,7 +39,7 @@ export default function ProductCategories() {
         {list.map((c, i) => (
           <article className={`cat-row ${i % 2 ? "reverse" : ""}`} key={c.slug}>
             <div className="cat-img">
-              <img src={c.image} alt={c.name} />
+              <img src={imageUrl(c.image)} alt={c.name} />
             </div>
             <div className="cat-info">
               <h3>{c.name}</h3>

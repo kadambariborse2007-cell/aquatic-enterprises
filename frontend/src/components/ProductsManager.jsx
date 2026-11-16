@@ -7,6 +7,8 @@ import {
   addModel,
   updateModel,
   deleteModel,
+  uploadImage,
+  imageUrl,
 } from "../api";
 
 function Field({ label, value, onChange, multiline }) {
@@ -50,6 +52,7 @@ export default function ProductsManager() {
   const [openSlug, setOpenSlug] = useState("");
   const [categoryForm, setCategoryForm] = useState(null);
   const [modelForm, setModelForm] = useState(null);
+  const [uploading, setUploading] = useState(false);
 
   async function load() {
     try {
@@ -202,6 +205,26 @@ export default function ProductsManager() {
     }
   }
 
+  async function handleImageUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    setError("");
+    setNotice("");
+    setUploading(true);
+
+    try {
+      const result = await uploadImage(file);
+      setCategoryForm((current) => ({ ...current, image: result.path }));
+      setNotice("Image uploaded. Now click Save category.");
+    } catch (e) {
+      setError(e.message || "Could not upload the image.");
+    }
+
+    setUploading(false);
+    event.target.value = "";
+  }
+
   function renderCategoryForm() {
     const isNew = !categoryForm.slug;
 
@@ -215,17 +238,34 @@ export default function ProductsManager() {
         <Field label="Price text (example: ₹ 4,500 – 9,000)" value={categoryForm.price} onChange={(v) => setCategoryForm({ ...categoryForm, price: v })} />
         <Field label="Tagline" value={categoryForm.tagline} onChange={(v) => setCategoryForm({ ...categoryForm, tagline: v })} />
         <Field label="Image path (example: /images/booster-pressure-systems.jpg)" value={categoryForm.image} onChange={(v) => setCategoryForm({ ...categoryForm, image: v })} />
+
+        <div style={styles.uploadBox}>
+          <label style={styles.uploadButton}>
+            {uploading ? "Uploading..." : "Upload image"}
+            <input
+              type="file"
+              accept="image/png, image/jpeg, image/webp"
+              onChange={handleImageUpload}
+              disabled={uploading}
+              style={{ display: "none" }}
+            />
+          </label>
+          <span style={styles.small}>
+            JPG, PNG or WEBP, up to 5 MB. The path above fills in automatically.
+          </span>
+        </div>
+
+        {categoryForm.image && (
+          <img
+            src={imageUrl(categoryForm.image)}
+            alt="Preview"
+            style={styles.preview}
+          />
+        )}
+
         <Field multiline label="Description" value={categoryForm.description} onChange={(v) => setCategoryForm({ ...categoryForm, description: v })} />
         <Field multiline label="Highlights (one per line)" value={categoryForm.highlights} onChange={(v) => setCategoryForm({ ...categoryForm, highlights: v })} />
         <Field multiline label="Applications (one per line)" value={categoryForm.applications} onChange={(v) => setCategoryForm({ ...categoryForm, applications: v })} />
-
-        {isNew && (
-          <p style={styles.small}>
-            For the image, first copy your picture into the folder
-            frontend/public/images, then type its path here, for example
-            /images/my-new-pump.jpg
-          </p>
-        )}
 
         <div style={styles.row}>
           <button style={styles.greenButton} onClick={saveCategory}>
@@ -400,6 +440,28 @@ const styles = {
     fontSize: "15px",
     fontFamily: "Arial, sans-serif",
     fontWeight: "normal",
+  },
+  uploadBox: {
+    display: "flex",
+    alignItems: "center",
+    gap: "12px",
+    flexWrap: "wrap",
+  },
+  uploadButton: {
+    padding: "9px 16px",
+    border: "none",
+    borderRadius: "7px",
+    background: "#00bac4",
+    color: "#082b49",
+    fontWeight: "bold",
+    cursor: "pointer",
+  },
+  preview: {
+    maxWidth: "220px",
+    maxHeight: "160px",
+    objectFit: "cover",
+    borderRadius: "8px",
+    border: "1px solid #cbd5e1",
   },
   lightButton: {
     padding: "9px 16px",

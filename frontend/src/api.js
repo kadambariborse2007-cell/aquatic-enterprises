@@ -161,3 +161,29 @@ export async function deleteCategory(slug) {
 
   return response.json();
 }
+
+export async function uploadImage(file) {
+  const token = localStorage.getItem("adminToken");
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await fetch(`${API_BASE_URL}/admin/upload-image`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.detail || "Could not upload image");
+  }
+
+  return response.json();
+}
+
+export function imageUrl(path) {
+  if (path && path.startsWith("/uploads/")) {
+    return `${API_BASE_URL}${path}`;
+  }
+  return path;
+}
