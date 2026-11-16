@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchAdminReviews, setReviewStatus, deleteReview } from "../api";
+import ProductsManager from "../components/ProductsManager";
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -78,12 +79,6 @@ export default function AdminDashboard() {
 
         <div style={styles.grid}>
           <div style={styles.card}>
-            <h3>Products</h3>
-            <p>Manage your water pump products.</p>
-            <span>Coming next</span>
-          </div>
-
-          <div style={styles.card}>
             <h3>Enquiries</h3>
             <p>View and manage customer enquiries.</p>
             <span>Coming next</span>
@@ -154,6 +149,8 @@ export default function AdminDashboard() {
               </div>
             ))}
         </section>
+
+        <ProductsManager />
       </main>
     </div>
   );

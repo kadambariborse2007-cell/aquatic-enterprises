@@ -71,3 +71,93 @@ export async function deleteReview(reviewId) {
 
   return response.json();
 }
+export async function fetchCategories() {
+  const response = await fetch(`${API_BASE_URL}/categories`);
+
+  if (!response.ok) {
+    throw new Error("Could not load categories");
+  }
+
+  return response.json();
+}
+
+export async function updateCategory(slug, data) {
+  const response = await fetch(`${API_BASE_URL}/admin/categories/${slug}`, {
+    method: "PUT",
+    headers: getAdminHeaders(),
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    throw new Error("Could not update category");
+  }
+
+  return response.json();
+}
+
+export async function addModel(slug, data) {
+  const response = await fetch(`${API_BASE_URL}/admin/categories/${slug}/models`, {
+    method: "POST",
+    headers: getAdminHeaders(),
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    throw new Error("Could not add model");
+  }
+
+  return response.json();
+}
+
+export async function updateModel(modelId, data) {
+  const response = await fetch(`${API_BASE_URL}/admin/models/${modelId}`, {
+    method: "PUT",
+    headers: getAdminHeaders(),
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    throw new Error("Could not update model");
+  }
+
+  return response.json();
+}
+
+export async function deleteModel(modelId) {
+  const response = await fetch(`${API_BASE_URL}/admin/models/${modelId}`, {
+    method: "DELETE",
+    headers: getAdminHeaders(),
+  });
+
+  if (!response.ok) {
+    throw new Error("Could not delete model");
+  }
+
+  return response.json();
+}
+export async function createCategory(data) {
+  const response = await fetch(`${API_BASE_URL}/admin/categories`, {
+    method: "POST",
+    headers: getAdminHeaders(),
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    throw new Error("Could not create category");
+  }
+
+  return response.json();
+}
+
+export async function deleteCategory(slug) {
+  const response = await fetch(`${API_BASE_URL}/admin/categories/${slug}`, {
+    method: "DELETE",
+    headers: getAdminHeaders(),
+  });
+
+  if (!response.ok) {
+    throw new Error("Could not delete category");
+  }
+
+  return response.json();
+}

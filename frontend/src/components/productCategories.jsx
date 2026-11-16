@@ -1,13 +1,42 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { categories } from "../data/categories";
+import { categories as fallbackCategories } from "../data/categories";
+import { fetchCategories } from "../api";
 import "./products.css";
 
 export default function ProductCategories() {
+  const [list, setList] = useState(null);
+
+  useEffect(() => {
+    let active = true;
+
+    fetchCategories()
+      .then((data) => {
+        if (active) setList(data);
+      })
+      .catch(() => {
+        if (active) setList(fallbackCategories);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  if (list === null) {
+    return (
+      <section className="cat-section">
+        <h2>Our Products</h2>
+        <p>Loading...</p>
+      </section>
+    );
+  }
+
   return (
     <section className="cat-section">
       <h2>Our Products</h2>
       <div className="cat-list">
-        {categories.map((c, i) => (
+        {list.map((c, i) => (
           <article className={`cat-row ${i % 2 ? "reverse" : ""}`} key={c.slug}>
             <div className="cat-img">
               <img src={c.image} alt={c.name} />

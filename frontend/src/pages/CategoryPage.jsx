@@ -1,15 +1,38 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { categories } from "../data/categories";
+import { categories as fallbackCategories } from "../data/categories";
+import { fetchCategories } from "../api";
 import "../components/products.css";
 
 export default function CategoryPage() {
   const { slug } = useParams();
-  const cat = categories.find((c) => c.slug === slug);
+  const [list, setList] = useState(null);
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [slug]);
+
+  useEffect(() => {
+    let active = true;
+
+    fetchCategories()
+      .then((data) => {
+        if (active) setList(data);
+      })
+      .catch(() => {
+        if (active) setList(fallbackCategories);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  if (list === null) {
+    return <p style={{ padding: 40 }}>Loading...</p>;
+  }
+
+  const cat = list.find((c) => c.slug === slug);
 
   if (!cat) {
     return (
@@ -48,7 +71,7 @@ export default function CategoryPage() {
           </thead>
           <tbody>
             {cat.series.map((s) => (
-              <tr key={s.name}>
+              <tr key={s.id ?? s.name}>
                 <td><b>{s.name}</b></td>
                 <td>{s.hp}</td>
                 <td>{s.info}</td>
