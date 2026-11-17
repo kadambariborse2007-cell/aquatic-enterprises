@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
-
-// Deployment ke time isko live backend address se badalna (step 8)
-const API_URL = "http://127.0.0.1:8001";
+const API_URL = "https://aquatic-enterprises.onrender.com";
 
 function formatDate(value) {
   if (!value) return "-";
