@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import SectionHeading from "./SectionHeading.jsx";
+import { API_BASE_URL } from "../api";
 
-const API_BASE = "http://127.0.0.1:8001";
+const API_BASE = API_BASE_URL;
 
 // Optional Google review link. Replace YOUR_PLACE_ID, or leave "" to hide the button.
 const GOOGLE_REVIEW_URL = "";

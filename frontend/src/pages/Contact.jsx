@@ -3,9 +3,9 @@ import { Link, useLocation, useSearchParams } from "react-router-dom";
 import SectionHeading from "../components/SectionHeading.jsx";
 import useBusiness from "../useBusiness";
 import { useAuth } from "../AuthContext";
+import { API_BASE_URL } from "../api";
 
-const API_URL = "http://127.0.0.1:8001/enquiries";
-
+const API_URL = `${API_BASE_URL}/enquiries`;
 const enquiryTypes = [
   { value: "pump", label: "New Pump Enquiry" },
   { value: "service", label: "Repair & Servicing" },

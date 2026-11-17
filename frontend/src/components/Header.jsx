@@ -4,7 +4,7 @@ import { useAuth } from "../AuthContext";
 import useBusiness from "../useBusiness";
 import { fetchBanner } from "../api";
 import SplashScreen from "./SplashScreen";
-
+import WelcomePopup from "./WelcomePopup";
 const bannerStyle = {
   background: "#00bac4",
   color: "#082b49",
@@ -98,7 +98,7 @@ export default function Header() {
         </nav>
       </header>
       <SplashScreen />
-      <welcomePopup/>
+      <WelcomePopup/>
     </>
   );
 }

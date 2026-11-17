@@ -1,6 +1,8 @@
-﻿import { createContext, useContext, useState, useEffect } from "react";
+﻿
+import { createContext, useContext, useState, useEffect } from "react";
+import { API_BASE_URL } from "./api";
 
-const API = "http://127.0.0.1:8001";
+const API = API_BASE_URL;
 const AuthContext = createContext(null);
 
 async function post(path, body) {
@@ -9,18 +11,27 @@ async function post(path, body) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
+
   const data = await res.json().catch(() => ({}));
+
   if (!res.ok) {
     const d = data.detail;
-    throw new Error(typeof d === "string" ? d : "Please check your details and try again.");
+    throw new Error(
+      typeof d === "string"
+        ? d
+        : "Please check your details and try again."
+    );
   }
+
   return data;
 }
 
 export function AuthProvider({ children }) {
   const [token, setToken] = useState(localStorage.getItem("token"));
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(!!localStorage.getItem("token"));
+  const [loading, setLoading] = useState(
+    !!localStorage.getItem("token")
+  );
 
   useEffect(() => {
     if (!token) {
@@ -28,7 +39,10 @@ export function AuthProvider({ children }) {
       setLoading(false);
       return;
     }
-    fetch(`${API}/me`, { headers: { Authorization: `Bearer ${token}` } })
+
+    fetch(`${API}/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
       .then((r) => {
         if (!r.ok) throw new Error();
         return r.json();
@@ -53,7 +67,12 @@ export function AuthProvider({ children }) {
   };
 
   const register = async (name, email, phone, password) => {
-    const data = await post("/register", { name, email, phone, password });
+    const data = await post("/register", {
+      name,
+      email,
+      phone,
+      password,
+    });
     saveToken(data.token);
   };
 
@@ -64,7 +83,9 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, register, logout }}>
+    <AuthContext.Provider
+      value={{ user, token, loading, login, register, logout }}
+    >
       {children}
     </AuthContext.Provider>
   );
