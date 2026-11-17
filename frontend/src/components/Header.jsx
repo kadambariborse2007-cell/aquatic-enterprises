@@ -4,7 +4,7 @@ import { useAuth } from "../AuthContext";
 import useBusiness from "../useBusiness";
 import { fetchBanner } from "../api";
 import SplashScreen from "./SplashScreen";
-import WelcomePopup from "./WelcomePopup";
+import WelcomePopup from "./welcomePopup";
 const bannerStyle = {
   background: "#00bac4",
   color: "#082b49",
