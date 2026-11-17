@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchAdminReviews, setReviewStatus, deleteReview } from "../api";
-import ProductsManager from "../components/productsManager";
+import ProductsManager from "../components/ProductsManager";
 import BusinessManager from "../components/BusinessManager";
 import BannerManager from "../components/BannerManager";
 import CustomersManager from "../components/CustomersManager";
