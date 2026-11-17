@@ -1,6 +1,4 @@
-export const API_BASE_URL = (
-  import.meta.env.VITE_API_URL || "https://aquatic-enterprises.onrender.com"
-).replace(/\/+$/, "");
+export const API_BASE_URL = "https://aquatic-enterprises.onrender.com";
 
 export async function checkBackendHealth() {
   const response = await fetch(`${API_BASE_URL}/health`);
